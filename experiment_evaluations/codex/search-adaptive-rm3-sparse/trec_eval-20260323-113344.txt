@@ -1,0 +1,118 @@
+branch: codex/search-adaptive-rm3-sparse
+timestamp: 20260323-113344
+collection: /Users/caiau/school/wsj.xml
+topics: /Users/caiau/school/autoresearch/51-100.titles.txt
+qrels: /Users/caiau/school/autoresearch/51-100.qrels.txt
+
+JASSJR_SEMANTIC_MODE: openai
+JASSJR_OPENAI_RERANK_MODE: mono
+
+JASSJR_ABLATION_BM25_ONLY: /Users/caiau/school/autoresearch/wsj-eval/codex-search-adaptive-rm3-sparse/ablation-runs/bm25-only.trec
+JASSJR_ABLATION_BM25_RM3_FUSION: /Users/caiau/school/autoresearch/wsj-eval/codex-search-adaptive-rm3-sparse/ablation-runs/bm25-rm3-fusion.trec
+JASSJR_ABLATION_BM25_DENSE_FUSION: /Users/caiau/school/autoresearch/wsj-eval/codex-search-adaptive-rm3-sparse/ablation-runs/bm25-dense-fusion.trec
+JASSJR_ABLATION_BM25_RM3_DENSE_FUSION: /Users/caiau/school/autoresearch/wsj-eval/codex-search-adaptive-rm3-sparse/ablation-runs/bm25-rm3-dense-fusion.trec
+JASSJR_SEMANTIC_MODE: openai
+JASSJR_SEMANTIC_KEY_SOURCE: dotenv
+JASSJR_SEMANTIC_MODEL: text-embedding-3-small
+JASSJR_SEMANTIC_DIMENSIONS: 512
+JASSJR_SEMANTIC_DOC_WORDS: 220
+JASSJR_SEMANTIC_BATCH_SIZE: 64
+JASSJR_SEMANTIC_DOCUMENTS: 173252
+JASSJR_SEMANTIC_DOC_VECTOR_FILE: /Users/caiau/school/autoresearch/wsj-eval/codex-search-adaptive-rm3-sparse/dense-docs.f32
+JASSJR_SEMANTIC_DOC_VECTOR_META: /Users/caiau/school/autoresearch/wsj-eval/codex-search-adaptive-rm3-sparse/dense-docs.meta.json
+
+JASSJR_SEMANTIC_MODE: openai
+JASSJR_SEMANTIC_KEY_SOURCE: dotenv
+JASSJR_SEMANTIC_MODEL: text-embedding-3-small
+JASSJR_SEMANTIC_DIMENSIONS: 512
+JASSJR_SEMANTIC_DOC_WORDS: 220
+JASSJR_SEMANTIC_DOCUMENTS: 173252
+JASSJR_SEMANTIC_DOC_VECTOR_FILE: /Users/caiau/school/autoresearch/wsj-grid-search/codex/search-fusion-weight-grid/dense-docs.f32
+JASSJR_SEMANTIC_OUTPUT_DOCS: 1000
+JASSJR_SEMANTIC_PROMPT_TOKENS: 203
+JASSJR_SEMANTIC_TOTAL_TOKENS: 203
+
+JASSJR_FUSION_RRF_K: 60
+JASSJR_FUSION_OUTPUT_FILE: /Users/caiau/school/autoresearch/wsj-eval/codex-search-adaptive-rm3-sparse/ablation-runs/bm25-rm3-fusion.trec
+JASSJR_FUSION_SOURCE_ORDER: bm25,rm3
+JASSJR_FUSION_SOURCE_BM25_PATH: /Users/caiau/school/autoresearch/wsj-eval/codex-search-adaptive-rm3-sparse/pipeline-run.SP2rq0/results-bm25.trec
+JASSJR_FUSION_SOURCE_BM25_WEIGHT: 0.05
+JASSJR_FUSION_SOURCE_BM25_TOPK: 250
+JASSJR_FUSION_SOURCE_RM3_PATH: /Users/caiau/school/autoresearch/wsj-eval/codex-search-adaptive-rm3-sparse/pipeline-run.SP2rq0/results-rm3.trec
+JASSJR_FUSION_SOURCE_RM3_WEIGHT: 0.55
+JASSJR_FUSION_SOURCE_RM3_TOPK: 250
+
+JASSJR_FUSION_RRF_K: 60
+JASSJR_FUSION_OUTPUT_FILE: /Users/caiau/school/autoresearch/wsj-eval/codex-search-adaptive-rm3-sparse/ablation-runs/bm25-dense-fusion.trec
+JASSJR_FUSION_SOURCE_ORDER: bm25,dense
+JASSJR_FUSION_SOURCE_BM25_PATH: /Users/caiau/school/autoresearch/wsj-eval/codex-search-adaptive-rm3-sparse/pipeline-run.SP2rq0/results-bm25.trec
+JASSJR_FUSION_SOURCE_BM25_WEIGHT: 0.05
+JASSJR_FUSION_SOURCE_BM25_TOPK: 250
+JASSJR_FUSION_SOURCE_DENSE_PATH: /Users/caiau/school/autoresearch/wsj-eval/codex-search-adaptive-rm3-sparse/pipeline-run.SP2rq0/results-dense.trec
+JASSJR_FUSION_SOURCE_DENSE_WEIGHT: 0.4
+JASSJR_FUSION_SOURCE_DENSE_TOPK: 250
+
+JASSJR_FUSION_RRF_K: 60
+JASSJR_FUSION_OUTPUT_FILE: /Users/caiau/school/autoresearch/wsj-eval/codex-search-adaptive-rm3-sparse/ablation-runs/bm25-rm3-dense-fusion.trec
+JASSJR_FUSION_SOURCE_ORDER: bm25,rm3,dense
+JASSJR_FUSION_SOURCE_BM25_PATH: /Users/caiau/school/autoresearch/wsj-eval/codex-search-adaptive-rm3-sparse/pipeline-run.SP2rq0/results-bm25.trec
+JASSJR_FUSION_SOURCE_BM25_WEIGHT: 0.05
+JASSJR_FUSION_SOURCE_BM25_TOPK: 250
+JASSJR_FUSION_SOURCE_RM3_PATH: /Users/caiau/school/autoresearch/wsj-eval/codex-search-adaptive-rm3-sparse/pipeline-run.SP2rq0/results-rm3.trec
+JASSJR_FUSION_SOURCE_RM3_WEIGHT: 0.55
+JASSJR_FUSION_SOURCE_RM3_TOPK: 250
+JASSJR_FUSION_SOURCE_DENSE_PATH: /Users/caiau/school/autoresearch/wsj-eval/codex-search-adaptive-rm3-sparse/pipeline-run.SP2rq0/results-dense.trec
+JASSJR_FUSION_SOURCE_DENSE_WEIGHT: 0.4
+JASSJR_FUSION_SOURCE_DENSE_TOPK: 250
+
+JASSJR_OPENAI_RERANK_MODE: mono
+JASSJR_OPENAI_KEY_SOURCE: dotenv
+JASSJR_OPENAI_MONO_MODEL: gpt-5-mini
+JASSJR_OPENAI_DUO_MODEL: gpt-5-mini
+JASSJR_OPENAI_PROMPT_VERSION: openai-rerank-v2
+JASSJR_OPENAI_MONO_DOCS: 85
+JASSJR_OPENAI_DUO_DOCS: 10
+JASSJR_OPENAI_DOC_WORDS: 220
+JASSJR_OPENAI_CACHE_DIR: /Users/caiau/school/autoresearch/.cache/openai-rerank
+JASSJR_OPENAI_CACHE_HITS: 4219
+JASSJR_OPENAI_CACHE_MISSES: 31
+JASSJR_OPENAI_MONO_CALLS: 31
+JASSJR_OPENAI_DUO_CALLS: 0
+JASSJR_OPENAI_EST_INPUT_TOKENS: 1018874
+JASSJR_OPENAI_EST_OUTPUT_TOKENS: 34000
+JASSJR_OPENAI_ACTUAL_INPUT_TOKENS: 1325923
+JASSJR_OPENAI_ACTUAL_OUTPUT_TOKENS: 114750
+JASSJR_OPENAI_EST_COST_USD: 0.322719
+JASSJR_OPENAI_ACTUAL_COST_USD: 0.560981
+
+
+runid                 	all	JASSjr
+num_q                 	all	50
+num_ret               	all	50000
+num_rel               	all	6228
+num_rel_ret           	all	4079
+map                   	all	0.2808
+gm_map                	all	0.1837
+Rprec                 	all	0.3227
+bpref                 	all	0.3536
+recip_rank            	all	0.8154
+iprec_at_recall_0.00  	all	0.8359
+iprec_at_recall_0.10  	all	0.5552
+iprec_at_recall_0.20  	all	0.4586
+iprec_at_recall_0.30  	all	0.3944
+iprec_at_recall_0.40  	all	0.3362
+iprec_at_recall_0.50  	all	0.2830
+iprec_at_recall_0.60  	all	0.2172
+iprec_at_recall_0.70  	all	0.1464
+iprec_at_recall_0.80  	all	0.0982
+iprec_at_recall_0.90  	all	0.0605
+iprec_at_recall_1.00  	all	0.0108
+P_5                   	all	0.6040
+P_10                  	all	0.5340
+P_15                  	all	0.5093
+P_20                  	all	0.4930
+P_30                  	all	0.4600
+P_100                 	all	0.3022
+P_200                 	all	0.2224
+P_500                 	all	0.1316
+P_1000                	all	0.0816

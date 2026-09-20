@@ -31,6 +31,12 @@ const defaultFeedbackDocs = 5
 const defaultExpansionTerms = 6
 const defaultExpansionWeight = 0.45
 const defaultExpansionMaxQueryTerms = 6
+const sparseFeedbackDocsBonus = 3
+const sparseExpansionTermsBonus = 4
+const sparseExpansionWeightBonus = 0.10
+const partialFeedbackDocsBonus = 2
+const partialExpansionTermsBonus = 2
+const partialExpansionWeightBonus = 0.05
 const defaultRerankDocs = 25
 const defaultRerankPassageWindow = 16
 const defaultRerankPassageWeight = 0.20
@@ -423,12 +429,38 @@ func rerankTopPassages(index loadedIndex, forwardFile *os.File, forwardOffsets [
 	return rerankedDocs
 }
 
-func selectExpansionTerms(index loadedIndex, forwardFile *os.File, forwardOffsets []int64, rankedDocs []int, rsv []float64, originalTerms map[string]struct{}) []weightedQueryTerm {
-	if feedbackDocs == 0 || expansionTerms == 0 || expansionWeight == 0 {
+func adaptiveExpansionParameters(index loadedIndex, originalTerms map[string]struct{}) (int, int, float64) {
+	feedbackDocLimit := feedbackDocs
+	expansionTermLimit := expansionTerms
+	expansionTermWeight := expansionWeight
+
+	indexedOriginalTerms := 0
+	for term := range originalTerms {
+		if _, ok := index.dictionary[term]; ok {
+			indexedOriginalTerms++
+		}
+	}
+
+	switch {
+	case len(originalTerms) <= 2 || indexedOriginalTerms <= 1:
+		feedbackDocLimit += sparseFeedbackDocsBonus
+		expansionTermLimit += sparseExpansionTermsBonus
+		expansionTermWeight = math.Min(expansionTermWeight+sparseExpansionWeightBonus, 0.75)
+	case indexedOriginalTerms < len(originalTerms):
+		feedbackDocLimit += partialFeedbackDocsBonus
+		expansionTermLimit += partialExpansionTermsBonus
+		expansionTermWeight = math.Min(expansionTermWeight+partialExpansionWeightBonus, 0.75)
+	}
+
+	return feedbackDocLimit, expansionTermLimit, expansionTermWeight
+}
+
+func selectExpansionTerms(index loadedIndex, forwardFile *os.File, forwardOffsets []int64, rankedDocs []int, rsv []float64, originalTerms map[string]struct{}, feedbackDocLimit int, expansionTermLimit int, expansionTermWeight float64) []weightedQueryTerm {
+	if feedbackDocLimit == 0 || expansionTermLimit == 0 || expansionTermWeight == 0 {
 		return nil
 	}
 
-	limit := feedbackDocs
+	limit := feedbackDocLimit
 	if len(rankedDocs) < limit {
 		limit = len(rankedDocs)
 	}
@@ -488,8 +520,8 @@ func selectExpansionTerms(index loadedIndex, forwardFile *os.File, forwardOffset
 		return cmp.Compare(a.token, b.token)
 	})
 
-	if len(selected) > expansionTerms {
-		selected = selected[:expansionTerms]
+	if len(selected) > expansionTermLimit {
+		selected = selected[:expansionTermLimit]
 	}
 
 	expansions := make([]weightedQueryTerm, 0, len(selected))
@@ -498,9 +530,9 @@ func selectExpansionTerms(index loadedIndex, forwardFile *os.File, forwardOffset
 		totalWeight += candidate.weight
 	}
 	for _, candidate := range selected {
-		weight := expansionWeight / float64(len(selected))
+		weight := expansionTermWeight / float64(len(selected))
 		if totalWeight > 0 {
-			weight = expansionWeight * candidate.weight / totalWeight
+			weight = expansionTermWeight * candidate.weight / totalWeight
 		}
 		expansions = append(expansions, weightedQueryTerm{token: candidate.token, weight: weight})
 	}
@@ -597,7 +629,8 @@ func main() {
 
 		touchedDocs = scoreQuery(index, queryTerms, rsv, touchedDocs)
 		if expansionMaxQueryTerms == 0 || len(queryTerms) <= expansionMaxQueryTerms {
-			expansions := selectExpansionTerms(index, forwardFile, forwardOffsets, touchedDocs, rsv, originalTerms)
+			feedbackDocLimit, expansionTermLimit, expansionTermWeight := adaptiveExpansionParameters(index, originalTerms)
+			expansions := selectExpansionTerms(index, forwardFile, forwardOffsets, touchedDocs, rsv, originalTerms, feedbackDocLimit, expansionTermLimit, expansionTermWeight)
 			if len(expansions) > 0 {
 				if expansionOnlyMode {
 					for _, d := range touchedDocs {
