@@ -4,6 +4,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { evidence, type TaskId } from './evidence'
 import { passageEvidence, type PassageTaskId } from './msmarco-evidence'
+import { wsjTop100 } from './wsj-top100'
 
 type LocalDocument = { title: string; text: string }
 type LocalDocuments = Record<string, LocalDocument>
@@ -79,8 +80,8 @@ export function getQueryPayload(qid: string, task: TaskId) {
     task,
     before: query.before.slice(0, 10),
     after: taskEvidence.after.slice(0, 10),
-    beforeMetrics: taskEvidence.beforeMetrics,
-    afterMetrics: taskEvidence.afterMetrics,
+    beforeMetrics: task === 'documents' ? wsjTop100.before.queries[qid] : taskEvidence.beforeMetrics,
+    afterMetrics: task === 'documents' ? wsjTop100.after.queries[qid] : taskEvidence.afterMetrics,
     seconds: taskEvidence.seconds,
     calls: taskEvidence.calls,
     model: evidence.tasks[task].model,

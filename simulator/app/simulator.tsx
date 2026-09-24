@@ -17,7 +17,7 @@ import {
 import { Button } from '@/components/catalyst/button'
 import { Select } from '@/components/catalyst/select'
 import { ThemeToggle } from '@/components/theme-toggle'
-import type { Evidence, MetricKey, ScoreRecord, TaskId } from '@/lib/evidence'
+import type { Evidence, MetricKey, Metrics, ScoreRecord, TaskId } from '@/lib/evidence'
 import type { getQueryPayload } from '@/lib/server-data'
 
 type QueryPayload = NonNullable<ReturnType<typeof getQueryPayload>>
@@ -31,11 +31,11 @@ export type DocumentPayload = {
 }
 
 const metricLabels: { key: MetricKey; label: string; help: string }[] = [
-  { key: 'map', label: 'AP', help: 'Average precision for this query. The mean across all 50 queries is MAP.' },
+  { key: 'map', label: 'AP@100', help: 'Average precision through rank 100. All known relevant articles remain in the denominator; the mean across 50 queries is MAP@100.' },
   { key: 'P_10', label: 'P@10', help: 'Fraction of the first ten results judged relevant.' },
-  { key: 'Rprec', label: 'R-prec', help: 'Precision at rank R, where R is the number of known relevant articles.' },
-  { key: 'bpref', label: 'bpref', help: 'A preference measure that accounts for incomplete judgments.' },
-  { key: 'recip_rank', label: 'RR', help: 'Reciprocal rank of the first judged relevant article.' },
+  { key: 'Rprec', label: 'R-prec', help: 'Precision at rank R, where R is the number of known relevant articles, evaluated with a 100-result cutoff.' },
+  { key: 'bpref', label: 'bpref', help: 'A preference measure for incomplete judgments, evaluated with a 100-result cutoff.' },
+  { key: 'recip_rank', label: 'RR@100', help: 'Reciprocal rank of the first judged relevant article within the first 100 results.' },
 ]
 
 export function AnimatedNumber({ value, active = true, places = 4, animateIn = false }: { value: number; active?: boolean; places?: number; animateIn?: boolean }) {
@@ -84,11 +84,12 @@ function Judgment({ value }: { value: number | null }) {
     : <span className="judgment judgment-irrelevant">Not relevant</span>
 }
 
-export function Simulator({ initial, options, taskInfo, source }: {
+export function Simulator({ initial, options, taskInfo, source, aggregate }: {
   initial: QueryPayload
   options: Option[]
   taskInfo: Evidence['tasks']
   source: Evidence['source']
+  aggregate: { before: Metrics; after: Metrics }
 }) {
   const [qid, setQid] = useState(initial.id)
   const task: TaskId = 'documents'
@@ -114,7 +115,6 @@ export function Simulator({ initial, options, taskInfo, source }: {
   const visible = phase === 'after' ? payload.after : payload.before
   const afterShown = phase === 'after'
   const activeTask = taskInfo[task]
-  const aggregateBefore = { map: 0.2521, P_10: 0.4460, Rprec: 0.2989, bpref: 0.3178, recip_rank: 0.6271 }
 
   function changeQuery(value: string) {
     if (timer.current) clearTimeout(timer.current)
@@ -183,7 +183,8 @@ export function Simulator({ initial, options, taskInfo, source }: {
         <section className="hero" aria-labelledby="page-title">
           <div className="hero-copy">
             <h1 id="page-title">BM25 retrieves. JEV reranks.</h1>
-            <p>Explore a saved WSJ search: 1,000 BM25 results, with the first 100 rescored as complete documents.</p>
+            <p>Explore the TREC-1 Wall Street Journal subset: 173,252 indexed articles across its 1987–1992 volumes, about 0.5 GB of source text. Each saved BM25 search returns 1,000 articles; JEV reranks the first 100.</p>
+            <a className="collection-source" href="https://trec.nist.gov/pubs/trec8/papers/overview_8.pdf" target="_blank" rel="noreferrer">NIST collection statistics <ArrowTopRightOnSquareIcon className="size-4" /></a>
           </div>
         </section>
 
@@ -195,7 +196,7 @@ export function Simulator({ initial, options, taskInfo, source }: {
         </section>
 
         <section className="metrics-section" aria-labelledby="metric-title">
-          <div className="section-heading"><div><h2 id="metric-title">Ranking quality</h2><p>Query {qid}: <strong>{current ? payload.text : 'Loading…'}</strong> · full saved ranking</p></div></div>
+          <div className="section-heading"><div><h2 id="metric-title">Ranking quality · top 100</h2><p>Query {qid}: <strong>{current ? payload.text : 'Loading…'}</strong></p></div></div>
           <div className="metric-board">
             <div className="metric-header"><span>Metric</span><span>BM25</span><span>JEV</span></div>
             {metricLabels.map(({ key, label, help }) => {
@@ -212,6 +213,7 @@ export function Simulator({ initial, options, taskInfo, source }: {
               </div>
             })}
           </div>
+          <p className="metric-footnote">Only ranks 1–100 are evaluated here. AP@100 still counts all known relevant articles in its denominator.</p>
         </section>
 
         <section className="ranking-section" aria-labelledby="rank-title">
@@ -244,10 +246,10 @@ export function Simulator({ initial, options, taskInfo, source }: {
               })}
             </AnimatePresence>
           </ol>}
-          <div className="ranking-tail"><span>Ranks 101–1,000 keep their BM25 order.</span><span>{phase === 'after' ? `${payload.seconds.toFixed(2)} s · ${payload.calls} recorded calls` : 'Saved experiment replay'}</span></div>
+          <div className="ranking-tail"><span>Ranks 101–1,000 receive no JEV scores.</span><span>{phase === 'after' ? `${payload.seconds.toFixed(2)} s · ${payload.calls} recorded calls` : 'Saved experiment replay'}</span></div>
         </section>
 
-        <section className="evidence-section" aria-labelledby="evidence-title"><div className="evidence-intro"><h2 id="evidence-title">Across 50 queries</h2><p>Fixed BM25 candidates; complete-document JEV scores.</p></div><div className="evidence-facts"><div><span>MAP</span><strong>{aggregateBefore.map.toFixed(4)} <ArrowRightIcon className="size-4" /> {activeTask.metrics.map.toFixed(4)}</strong><small>BM25 → JEV</small></div><div><span>Reranking time</span><strong>{activeTask.rerankSeconds.toFixed(1)} s</strong><small>Uncached run</small></div><div><span>Estimated API cost</span><strong>${activeTask.estimatedCostUsd.toFixed(3)}</strong><small>Successful responses</small></div></div><div className="evidence-bottom"><span>{activeTask.calls.toLocaleString()} scored articles · {activeTask.model} · recorded replay</span><a href="https://github.com/carlaiau/jev-reranking/blob/main/reranking/results/jev-comparison-20260918.md" target="_blank" rel="noreferrer">Experiment report <ArrowTopRightOnSquareIcon className="size-4" /></a></div></section>
+        <section className="evidence-section" aria-labelledby="evidence-title"><div className="evidence-intro"><h2 id="evidence-title">Across 50 TREC-1 topics</h2><p>Top-100 metrics on fixed BM25 candidates.</p></div><div className="evidence-facts"><div><span>MAP@100</span><strong>{aggregate.before.map.toFixed(4)} <ArrowRightIcon className="size-4" /> {aggregate.after.map.toFixed(4)}</strong><small>BM25 → JEV</small></div><div><span>Reranking time</span><strong>{activeTask.rerankSeconds.toFixed(1)} s</strong><small>Uncached run</small></div><div><span>Estimated API cost</span><strong>${activeTask.estimatedCostUsd.toFixed(3)}</strong><small>Successful responses</small></div></div><div className="evidence-bottom"><span>{activeTask.calls.toLocaleString()} scored articles · {activeTask.model} · recorded replay</span><a href="https://github.com/carlaiau/jev-reranking/blob/main/reranking/results/jev-comparison-20260918.md" target="_blank" rel="noreferrer">Full-run report <ArrowTopRightOnSquareIcon className="size-4" /></a></div></section>
       </div>
     </main>
   )

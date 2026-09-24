@@ -3,9 +3,11 @@
 from collections import defaultdict
 import json
 from pathlib import Path
+import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = Path(__file__).resolve().parents[1] / "data" / "evidence.json"
+TOP100_OUT = OUT.with_name("wsj-top100-metrics.json")
 BASE = ROOT / "stage1/results/integrated-main-20260918"
 RESULTS = ROOT / "reranking/results"
 TASKS = {
@@ -30,6 +32,23 @@ def load_metrics(path):
         if name in METRICS and qid != "all":
             output[qid][name] = float(value)
     return output
+
+
+def evaluate_top100(qrels_path, run_path, topics):
+    command = [
+        "trec_eval", "-c", "-M100", "-q",
+        "-m", "map", "-m", "P.10", "-m", "Rprec", "-m", "bpref", "-m", "recip_rank",
+        str(qrels_path), str(run_path),
+    ]
+    result = subprocess.run(command, check=True, capture_output=True, text=True)
+    values = defaultdict(dict)
+    for line in result.stdout.splitlines():
+        name, qid, value = line.split()
+        if name in METRICS:
+            values[qid][name] = float(value)
+    if set(values) != set(topics) | {"all"} or any(set(row) != set(METRICS) for row in values.values()):
+        raise ValueError(f"Incomplete top-100 evaluation for {run_path}")
+    return {"all": values["all"], "queries": {qid: values[qid] for qid in topics}}
 
 
 def load_scores(path):
@@ -133,7 +152,14 @@ def main():
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(output, separators=(",", ":"), ensure_ascii=False) + "\n")
+    top100 = {
+        "cutoff": 100,
+        "before": evaluate_top100(BASE / "qrels.txt", BASE / "run.trec", topics),
+        "after": evaluate_top100(BASE / "qrels.txt", TASKS["documents"] / "run.trec", topics),
+    }
+    TOP100_OUT.write_text(json.dumps(top100, indent=2) + "\n")
     print(f"Wrote {OUT} for {len(output['queries'])} queries; no article text included")
+    print(f"Wrote {TOP100_OUT} with trec_eval -c -M100 metrics")
 
 
 if __name__ == "__main__":

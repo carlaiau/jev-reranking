@@ -18,4 +18,4 @@ The result order is the visual explanation. Choosing a query replays its saved r
 
 ## Evidence boundary
 
-Query and aggregate metrics come from saved runs. WSJ article names may appear, but full article text never enters the browser; the call view shows only a short excerpt and the recorded source-token count. The MS MARCO comparison starts from monoBERT, since the supplied candidate file order is not a lexical ranking.
+Query and aggregate metrics come from saved runs. The WSJ view evaluates only the reranked top 100 and names that cutoff beside the numbers; its source context gives the TREC-1 corpus size and article count. WSJ article names may appear, but full article text never enters the browser; the call view shows only a short excerpt and the recorded source-token count. The MS MARCO comparison starts from monoBERT, since the supplied candidate file order is not a lexical ranking.

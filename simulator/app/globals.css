@@ -69,6 +69,7 @@ button, a, select { -webkit-tap-highlight-color: transparent; }
 .hero { padding: 64px 0 34px; }
 .hero-copy h1 { max-width: 850px; margin: 0; font-size: clamp(2.7rem, 5vw, 4.25rem); font-weight: 650; line-height: 1.08; letter-spacing: -.035em; text-wrap: balance; }
 .hero-copy p { max-width: 680px; margin: 18px 0 0; color: var(--muted); font-size: 1.04rem; line-height: 1.55; }
+.collection-source { display: inline-flex; align-items: center; gap: 5px; margin-top: 10px; color: var(--accent-text); font-size: .8rem; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
 
 .control-room { display: grid; grid-template-columns: minmax(0, 620px) minmax(0, 1fr); align-items: end; gap: 20px; padding: 18px 0 29px; border-bottom: 1px solid var(--line); }
 .control-label { display: block; margin-bottom: 8px; color: var(--text); font-size: .83rem; font-weight: 600; }

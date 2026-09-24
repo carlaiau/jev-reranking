@@ -17,13 +17,16 @@ npm run dev
 
 Open `http://localhost:3000`. The MS MARCO preparation uses the tokenizer environment and cached `castorini/monobert-large-msmarco` revision described in [the reranking protocol](../reranking/jev-comparison.md), plus the three local downloads described in [the passage protocol](../reranking/msmarco.md). If those files are absent, the rankings and metrics still replay; missing names and input previews show an availability message.
 
+Rebuilding WSJ evidence requires `trec_eval` on `PATH`; `build_evidence.py` also writes the text-free top-100 metrics file from the fixed run and qrels.
+
 The prepared text is written to `../.cache/reranking-simulator/`, which Git ignores. `SIMULATOR_CONTENT_DIR` can point the server to a different directory holding the same JSON files. Keep any WSJ or MS MARCO text on an appropriately licensed server; neither text nor response cache is packaged with the site. The WSJ document API returns an article name, no article body, and at most a 100-character excerpt plus `[REDACTED_TOKENS N BERT source tokens sent]` for each call. This count comes from the saved document token length or passage window span; recorded API input tokens, which also include the query and question, are shown separately. The complete WSJ text never enters page props, API JSON, or the browser.
 
 ## Evidence and scope
 
 - `data/evidence.json` and `data/msmarco-evidence.json` contain IDs, ranks, judgments, recorded scores, usage, timing and metrics, without article or passage text. The scripts rebuild them from completed repository artifacts and validate candidate membership and scoring coverage.
 - The local text preparation checks JEV payload hashes. The WSJ call inspector shows a redacted request shape and recorded score/model/usage fields; MS MARCO displays the saved passage input. Both are replays, not fresh model responses.
-- WSJ query metrics evaluate the complete saved 1,000-result ranking. The UI shows ten rows while the first 100 are reranked with complete-document JEV. The fixed aggregate stage-1 MAP is 0.2521.
+- WSJ query and aggregate metrics in the simulator use `trec_eval -c -M100` on the saved run and qrels. This evaluates ranks 1–100, the only positions JEV reranks. The UI shows ten rows. Top-100 MAP is 0.1729 for BM25 and 0.2263 for complete-document JEV. The original full 1,000-result MAP values remain 0.2521 and 0.3055 in the experiment reports; these are different evaluation scopes.
+- The WSJ corpus is the TREC-1 subset of TREC disks 1 and 2: 173,252 indexed articles across the 1987–1992 volumes, about 0.5 GB of source text. The simulator links to NIST collection statistics; no article body is bundled.
 - MS MARCO v1 candidate file order is by passage ID and has no lexical-ranking meaning. The before view is the measured monoBERT ranking; JEV receives the original supplied passage text. Its primary metric is graded nDCG@10; binary metrics count grades 2–3 as relevant. Its retrieval time is unavailable.
 - The default queries are illustrative examples selected for this teaching interface. They are not held-out evidence for tuning or claims that every query improves.
 
