@@ -7,7 +7,7 @@ import { Button } from '@/components/catalyst/button'
 import { MetricTooltip } from '@/components/metric-tooltip'
 import { Select } from '@/components/catalyst/select'
 import { ThemeToggle } from '@/components/theme-toggle'
-import { AnimatedNumber, CallPane, RouteMark, type DocumentPayload } from '../simulator'
+import { AnimatedNumber, CallPane, RelativeChange, RouteMark, type DocumentPayload } from '../simulator'
 import type { PassageEvidence, PassageMetricKey, PassageMetrics, PassageTaskId } from '@/lib/msmarco-evidence'
 import type { getMsmarcoQueryPayload } from '@/lib/server-data'
 
@@ -180,7 +180,7 @@ export function PassageSimulator({ initial, options, taskInfo, referenceMetrics 
             return <div className={`metric-row ${key === 'ndcg_cut_10' ? 'metric-primary' : ''}`} key={key}>
               <div className="metric-name"><MetricTooltip label={label} meaning={meaning} purpose={purpose} /></div>
               <div className="metric-before">{current ? <AnimatedNumber value={before} animateIn /> : '—'}</div>
-              <div className={`metric-after ${afterShown && delta >= 0 ? 'improved' : ''} ${afterShown && delta < 0 ? 'declined' : ''}`}>{current ? <AnimatedNumber value={after} active={afterShown} /> : '—'}{afterShown && <span className="metric-delta">{delta >= 0 ? '+' : ''}{delta.toFixed(4)}</span>}</div>
+              <div className={`metric-after ${afterShown && delta >= 0 ? 'improved' : ''} ${afterShown && delta < 0 ? 'declined' : ''}`}>{current ? <AnimatedNumber value={after} active={afterShown} /> : '—'}{afterShown && <RelativeChange before={before} after={after} />}</div>
             </div>
           })}
           <div className="metric-row metric-coverage">
@@ -189,7 +189,7 @@ export function PassageSimulator({ initial, options, taskInfo, referenceMetrics 
             <div className="metric-coverage-note">Fixed shortlist</div>
           </div>
         </div>
-        <p className="metric-footnote">nDCG@10 uses grades 0–3. AP@100 and RR@10 count grades 2–3 as relevant.</p>
+        <p className="metric-footnote">Percentage change is relative to monoBERT. nDCG@10 uses grades 0–3; AP@100 and RR@10 count grades 2–3 as relevant.</p>
       </section>
 
       <section className="ranking-section" aria-labelledby="passage-rank-title"><div className="section-heading ranking-heading"><div><h2 id="passage-rank-title">Results</h2><p>Up to 10 shown · up to 100 reranked</p></div><label className="judgment-toggle"><input type="checkbox" checked={showGrades} onChange={event => setShowGrades(event.target.checked)} /><span className="toggle-track"><span /></span> NIST grades</label></div><div className="ranking-toolbar"><div className="ranking-status"><span className={`status-lamp ${isLoading ? 'searching' : phase}`} /><strong>{isLoading ? 'Loading monoBERT results…' : loadError ? 'Results unavailable' : phase === 'after' ? 'JEV order' : phase === 'scoring' ? 'Scoring' : 'monoBERT order'}</strong></div><div className="toolbar-actions">{afterShown && replayReady && <><button type="button" className="quiet-action" onClick={reset}><ArrowPathIcon className="size-4" /> Reset</button><Button type="button" color="emerald" onClick={replay}><PlayIcon data-slot="icon" />Replay JEV</Button></>}</div></div>{isLoading && <div className="replay-progress" role="status" aria-label="Loading the saved monoBERT reference ranking"><span className="search-progress-fill" /></div>}{phase === 'scoring' && <div className="replay-progress" role="status"><span className="replay-progress-fill" /><span className="sr-only">Playing back recorded passage scores before reordering.</span></div>}{loadError && <div className="inline-error">{loadError}</div>}{!payload.contentAvailable && <div className="content-alert"><DocumentTextIcon className="size-5" /><span>Passage text is not installed on this server. Rankings still replay; prepare the local licensed TREC DL 2019 source files to inspect passages and exact calls.</span></div>}{!current ? <div className="ranking-loading" style={loadingHeight ? { minHeight: loadingHeight } : undefined}>{loadError ? 'Results unavailable.' : 'Loading saved monoBERT results…'}</div> : <ol className="result-list" ref={resultList}><AnimatePresence initial={false} mode="popLayout">{visible.map((docid, index) => {

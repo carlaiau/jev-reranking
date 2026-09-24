@@ -71,6 +71,12 @@ export function AnimatedNumber({ value, active = true, places = 4, animateIn = f
   return <span className="tabular-nums">{active ? display.toFixed(places) : '—'}</span>
 }
 
+export function RelativeChange({ before, after }: { before: number; after: number }) {
+  if (before === 0) return <span className="metric-delta">{after === 0 ? 'No change' : 'From 0'}</span>
+  const percent = (after - before) / before * 100
+  return <span className="metric-delta">{percent > 0 ? '+' : ''}<AnimatedNumber value={percent} places={1} />%</span>
+}
+
 export function RouteMark({ className = '' }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 46 46" fill="none" aria-hidden="true">
@@ -246,12 +252,12 @@ export function Simulator({ initial, options, taskInfo, source, aggregate }: {
                 <div className="metric-before">{current ? <AnimatedNumber value={before} animateIn /> : '—'}</div>
                 <div className={`metric-after ${afterShown && !fixed && delta >= 0 ? 'improved' : ''} ${afterShown && !fixed && delta < 0 ? 'declined' : ''}`}>
                   {current ? <AnimatedNumber value={after} active={afterShown} /> : '—'}
-                  {afterShown && <span className="metric-delta">{fixed ? 'Fixed set' : `${delta >= 0 ? '+' : ''}${delta.toFixed(4)}`}</span>}
+                  {afterShown && (fixed ? <span className="metric-delta">Fixed set</span> : <RelativeChange before={before} after={after} />)}
                 </div>
               </div>
             })}
           </div>
-          <p className="metric-footnote">Recall@100 stays fixed because JEV reorders the same 100 BM25 candidates.</p>
+          <p className="metric-footnote">Percentage change is relative to BM25. Recall@100 stays fixed because JEV reorders the same 100 candidates.</p>
         </section>
 
         <section className="ranking-section" aria-labelledby="rank-title">
