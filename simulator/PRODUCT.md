@@ -29,12 +29,12 @@ The primary demonstration is the fixed WSJ stage-1 BM25 ranking across 50 TREC t
 ## Capabilities and Constraints
 
 - Visitors choose a dataset and query to replay the saved initial ranking, inspect ranked results and human judgments, and inspect the request shape and recorded JEV answer. JEV reranking begins automatically after a short pause; Replay JEV repeats it on demand. The query selector remains available while scrolling. WSJ shows names and redacted input excerpts; MS MARCO can show supplied passage text.
-- Show metrics computed from the saved rankings. WSJ leads with binary-judgment nDCG@10, then AP@100/MAP@100, P@10, bpref, first-stage Recall@100 and Judged@10; its fixed full-run MAP remains documented separately. MS MARCO projects the saved scores onto monoBERT's first 100 candidates per query and leads with graded nDCG@10, followed by MAP@100, RR@10, fixed shortlist Recall@100 and Judged@10. The completed full-candidate experiment remains documented separately.
+- Show metrics computed from the saved rankings. WSJ leads with binary-judgment nDCG@10, then AP@100/MAP@100, P@10, bpref, first-stage Recall@100 and Judged@10; its fixed full-run MAP remains documented separately. MS MARCO replays all supplied candidates and leads with graded nDCG@10, followed by MAP@1000, RR@10, rank-dependent Recall@100, fixed-pool Recall@1000 and Judged@10.
 - The WSJ stage-1 ranking is the fixed BM25 run. The MS MARCO supplied candidate file is ID sorted, not a lexical ranking; any before view for that task uses monoBERT and must say so.
 - Never invent scores, judgments, content, timing or cost. Playback is local and makes no model calls.
 - Collection text and response caches stay outside Git. Full WSJ article text never reaches browser responses.
 - The WSJ interface uses complete-document JEV only. The MS MARCO interface uses the original supplied passage text only.
-- The MS MARCO header explains the 8,841,823-passage corpus, the completed 43-query, 41,042-pair TREC DL 2019 experiment, and the web view's derived top-100 projection.
+- The MS MARCO header explains the 8,841,823-passage corpus and the completed 43-query, 41,042-pair TREC DL 2019 experiment. Expanded rows show the JEV call directly, including the supplied passage in its request shape.
 - Light mode is the default; dark mode is available from the header.
 - Mobile web use is a primary requirement. Animations need a reduced-motion path.
 

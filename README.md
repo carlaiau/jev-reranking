@@ -10,9 +10,9 @@ reranks only positions 1–100; positions 101–1,000 keep their BM25 order. The
 page displays the top 10 and evaluates WSJ metrics with a rank-100 cutoff
 (`trec_eval -c -M100`). Its nDCG@10 is 0.4640 → 0.6634 and MAP@100 is
 0.1729 → 0.2263, while the WSJ table below reports full 1,000-result MAP of
-0.2521 → 0.3055. The MS MARCO web view separately selects monoBERT's first 100
-from each independently supplied candidate list; its benchmark table below still
-reports the completed full-candidate experiment.
+0.2521 → 0.3055. The MS MARCO web view replays the completed experiment on all
+supplied candidates, comparing monoBERT with original-text JEV; its benchmark
+table below reports the same full-candidate scope.
 
 ## Benchmark 1: MS MARCO v1 passage reranking (TREC DL 2019)
 

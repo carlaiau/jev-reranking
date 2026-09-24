@@ -167,14 +167,8 @@ button, a, select { -webkit-tap-highlight-color: transparent; }
 .score-pending { color: var(--dim); font-size: 1.15rem; }
 .result-details { overflow: hidden; }
 .details-inner { border-top: 1px solid var(--line); background: var(--surface-soft); }
-.details-tabs { display: flex; gap: 4px; padding: 8px 16px 0; border-bottom: 1px solid var(--line); }
-.details-tabs button { display: flex; align-items: center; gap: 6px; padding: 10px 12px; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--muted); font-size: .82rem; }
-.details-tabs button[aria-selected="true"] { border-bottom-color: var(--accent); color: var(--text); }
 .details-loading { padding: 22px 26px; color: var(--muted); font-size: .82rem; }
-.article-pane, .call-pane { padding: 22px 26px 26px; }
-.pane-head { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; font-size: .9rem; }
-.pane-head span { color: var(--muted); font-size: .76rem; }
-.article-pane p { max-width: 75ch; max-height: 370px; overflow-y: auto; margin: 12px 0 0; color: var(--muted); font-size: .88rem; line-height: 1.65; white-space: pre-wrap; }
+.call-pane { padding: 22px 26px 26px; }
 .call-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-bottom: 22px; }
 .call-summary span, .call-summary strong, .call-summary small { display: block; }
 .call-summary span { color: var(--muted); font-size: .74rem; }
@@ -203,7 +197,6 @@ button, a, select { -webkit-tap-highlight-color: transparent; }
 .evidence-bottom { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px 18px; color: var(--muted); font-size: .76rem; }
 .evidence-bottom a { display: inline-flex; align-items: center; gap: 5px; color: var(--accent-text); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
 .passage-site .result-title { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
-.passage-site .article-pane p { max-height: none; }
 
 @media (max-width: 760px) {
   .page-wrap { width: min(100% - 32px, 1180px); }
@@ -242,9 +235,7 @@ button, a, select { -webkit-tap-highlight-color: transparent; }
   .result-subline { font-size: .68rem; }
   .result-score strong { font-size: .88rem; }
   .result-score small { font-size: .59rem; }
-  .details-tabs { padding-inline: 8px; }
-  .details-tabs button { font-size: .75rem; }
-  .article-pane, .call-pane { padding: 17px 14px 20px; }
+  .call-pane { padding: 17px 14px 20px; }
   .call-summary { gap: 9px; }
   .call-summary strong { font-size: .84rem; }
   .call-summary span, .call-summary small { font-size: .65rem; }
