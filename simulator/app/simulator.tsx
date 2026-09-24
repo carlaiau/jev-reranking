@@ -23,6 +23,7 @@ type QueryPayload = NonNullable<ReturnType<typeof getQueryPayload>>
 type Option = { id: string; text: string }
 type Phase = 'before' | 'scoring' | 'after'
 const AUTO_REPLAY_DELAY_MS = 2200
+const REORDER_SETTLE_MS = 700
 export type DocumentPayload = {
   docid: string
   title: string
@@ -95,6 +96,7 @@ export function Simulator({ initial, options, taskInfo, source, aggregate }: {
   const task: TaskId = 'documents'
   const [payload, setPayload] = useState<QueryPayload>(initial)
   const [phase, setPhase] = useState<Phase>('before')
+  const [replayReady, setReplayReady] = useState(false)
   const [showJudgments, setShowJudgments] = useState(true)
   const [openId, setOpenId] = useState<string | null>(null)
   const [documentData, setDocumentData] = useState<Record<string, DocumentPayload>>({})
@@ -104,6 +106,7 @@ export function Simulator({ initial, options, taskInfo, source, aggregate }: {
   const [loadingHeight, setLoadingHeight] = useState<number | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const autoTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const settleTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const replayFrame = useRef<number | null>(null)
   const resultList = useRef<HTMLOListElement | null>(null)
   const searchController = useRef<AbortController | null>(null)
@@ -120,6 +123,7 @@ export function Simulator({ initial, options, taskInfo, source, aggregate }: {
   function clearPlayback() {
     if (timer.current) clearTimeout(timer.current)
     if (autoTimer.current) clearTimeout(autoTimer.current)
+    if (settleTimer.current) clearTimeout(settleTimer.current)
     if (replayFrame.current !== null) cancelAnimationFrame(replayFrame.current)
   }
 
@@ -136,6 +140,7 @@ export function Simulator({ initial, options, taskInfo, source, aggregate }: {
     searchController.current = controller
     setQid(value)
     setPhase('before')
+    setReplayReady(false)
     setOpenId(null)
     setIsLoading(true)
     setLoadError(null)
@@ -157,6 +162,7 @@ export function Simulator({ initial, options, taskInfo, source, aggregate }: {
 
   function startReplay() {
     clearPlayback()
+    setReplayReady(false)
     setOpenId(null)
     setPhase('before')
     replayFrame.current = requestAnimationFrame(() => {
@@ -165,6 +171,10 @@ export function Simulator({ initial, options, taskInfo, source, aggregate }: {
       timer.current = setTimeout(() => {
         timer.current = null
         setPhase('after')
+        settleTimer.current = setTimeout(() => {
+          settleTimer.current = null
+          setReplayReady(true)
+        }, reduced ? 0 : REORDER_SETTLE_MS)
       }, reduced ? 100 : 2250)
     })
   }
@@ -178,6 +188,7 @@ export function Simulator({ initial, options, taskInfo, source, aggregate }: {
     clearPlayback()
     setOpenId(null)
     setPhase('before')
+    setReplayReady(false)
   }
 
   function toggleResult(docid: string) {
@@ -244,7 +255,7 @@ export function Simulator({ initial, options, taskInfo, source, aggregate }: {
           <div className="section-heading ranking-heading"><div><h2 id="rank-title">Results</h2><p>Top 10 shown · first 100 reranked</p></div><label className="judgment-toggle"><input type="checkbox" checked={showJudgments} onChange={event => setShowJudgments(event.target.checked)} /><span className="toggle-track"><span /></span> Human judgments</label></div>
           <div className="ranking-toolbar">
             <div className="ranking-status"><span className={`status-lamp ${isLoading ? 'searching' : phase}`} /><strong>{isLoading ? 'Searching BM25…' : loadError ? 'Search unavailable' : phase === 'after' ? 'JEV order' : phase === 'scoring' ? 'Scoring' : 'BM25 order'}</strong></div>
-            <div className="toolbar-actions">{phase === 'after' && <button type="button" className="quiet-action" onClick={reset}><ArrowPathIcon className="size-4" /> Reset</button>}<Button type="button" color="emerald" onClick={replay} disabled={!current || phase === 'scoring'}><PlayIcon data-slot="icon" />Replay JEV</Button></div>
+            <div className="toolbar-actions">{afterShown && replayReady && <><button type="button" className="quiet-action" onClick={reset}><ArrowPathIcon className="size-4" /> Reset</button><Button type="button" color="emerald" onClick={replay}><PlayIcon data-slot="icon" />Replay JEV</Button></>}</div>
           </div>
           {isLoading && <div className="replay-progress" role="status" aria-label="Replaying the saved BM25 search"><span className="search-progress-fill" /></div>}
           {phase === 'scoring' && <div className="replay-progress" role="status"><span className="replay-progress-fill" /><span className="sr-only">Playing back recorded JEV scores before reordering.</span></div>}
