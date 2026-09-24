@@ -5,6 +5,13 @@ MS MARCO passage and document benchmarks, with TREC-1 WSJ as a transfer test.
 
 The [interactive reranking simulator](simulator/README.md) replays the fixed WSJ lexical ranking and completed JEV scores, with a separate MS MARCO passage comparison. Collection text stays outside Git.
 
+In the web app's WSJ view, each saved BM25 search has 1,000 results, but JEV
+reranks only positions 1–100; positions 101–1,000 keep their BM25 order. The
+page displays the top 10 and evaluates WSJ metrics with a rank-100 cutoff
+(`trec_eval -c -M100`). Its MAP@100 is 0.1729 → 0.2263, while the WSJ table
+below reports full 1,000-result MAP of 0.2521 → 0.3055. The MS MARCO passage
+view reranks all supplied candidates and does not use this WSJ cutoff.
+
 ## Benchmark 1: MS MARCO v1 passage reranking (TREC DL 2019)
 
 Rerank 41,042 supplied query–passage pairs across 43 judged queries, with no new
