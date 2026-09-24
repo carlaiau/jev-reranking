@@ -3,6 +3,8 @@
 Can JEV's zero-shot general “intelligence” match established specialist rerankers? We compare ranking quality, time and cost on fixed candidates, using
 MS MARCO passage and document benchmarks, with TREC-1 WSJ as a transfer test.
 
+The [interactive reranking simulator](simulator/README.md) replays the fixed WSJ lexical ranking and completed JEV scores, with a separate MS MARCO passage comparison. Collection text stays outside Git.
+
 ## Benchmark 1: MS MARCO v1 passage reranking (TREC DL 2019)
 
 Rerank 41,042 supplied query–passage pairs across 43 judged queries, with no new
