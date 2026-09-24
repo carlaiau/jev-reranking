@@ -160,7 +160,7 @@ export function PassageSimulator({ initial, options, taskInfo, referenceMetrics 
       <section className="hero passage-hero" aria-labelledby="passage-title">
         <div className="hero-copy">
           <h1 id="passage-title">Passages, reranked.</h1>
-          <p><a href="https://microsoft.github.io/msmarco/Datasets.html" target="_blank" rel="noreferrer">MS MARCO v1</a> contains 8,841,823 passages from millions of web pages. The saved <a href="https://trec.nist.gov/data/deep2019.html" target="_blank" rel="noreferrer">TREC DL 2019</a> experiment scored 41,042 supplied pairs across 43 queries. This view compares monoBERT and JEV on up to 100 monoBERT-ranked candidates per query, using JEV’s recorded original-text scores.</p>
+          <p><a href="https://microsoft.github.io/msmarco/Datasets.html" target="_blank" rel="noreferrer">MS MARCO v1</a> contains 8,841,823 passages from millions of web pages. <a href="https://trec.nist.gov/data/deep2019.html" target="_blank" rel="noreferrer">TREC DL 2019</a> supplied 1,000 candidates for 41 queries, plus lists of 37 and 5; the completed experiment scored all 41,042 pairs. This view selects monoBERT’s top 100 from each supplied list, then replays JEV’s recorded original-text scores on that subset.</p>
         </div>
       </section>
 
