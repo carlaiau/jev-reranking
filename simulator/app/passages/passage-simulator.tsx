@@ -13,6 +13,7 @@ import type { getMsmarcoQueryPayload } from '@/lib/server-data'
 type QueryPayload = NonNullable<ReturnType<typeof getMsmarcoQueryPayload>>
 type Phase = 'before' | 'scoring' | 'after'
 type Option = { id: string; text: string }
+const AUTO_REPLAY_DELAY_MS = 2200
 
 const metricLabels: { key: PassageMetricKey; label: string; help: string }[] = [
   { key: 'ndcg_cut_10', label: 'nDCG@10', help: 'Headline metric. Rewards highly relevant graded passages near the top ten.' },
@@ -48,14 +49,27 @@ export function PassageSimulator({ initial, options, taskInfo, referenceMetrics 
   const [isLoading, setIsLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [documentError, setDocumentError] = useState<string | null>(null)
+  const [loadingHeight, setLoadingHeight] = useState<number | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const autoTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const replayFrame = useRef<number | null>(null)
+  const resultList = useRef<HTMLOListElement | null>(null)
   const searchController = useRef<AbortController | null>(null)
   const reduced = useReducedMotion()
 
-  useEffect(() => () => {
-    if (timer.current) clearTimeout(timer.current)
-    searchController.current?.abort()
+  useEffect(() => {
+    autoTimer.current = setTimeout(startReplay, AUTO_REPLAY_DELAY_MS)
+    return () => {
+      clearPlayback()
+      searchController.current?.abort()
+    }
   }, [])
+
+  function clearPlayback() {
+    if (timer.current) clearTimeout(timer.current)
+    if (autoTimer.current) clearTimeout(autoTimer.current)
+    if (replayFrame.current !== null) cancelAnimationFrame(replayFrame.current)
+  }
 
   const current = !isLoading && payload.id === qid && payload.task === task
   const visible = phase === 'after' ? payload.after : payload.before
@@ -63,7 +77,8 @@ export function PassageSimulator({ initial, options, taskInfo, referenceMetrics 
   const afterShown = phase === 'after'
 
   function changeQuery(value: string) {
-    if (timer.current) clearTimeout(timer.current)
+    clearPlayback()
+    if (resultList.current) setLoadingHeight(resultList.current.offsetHeight)
     searchController.current?.abort()
     const controller = new AbortController()
     searchController.current = controller
@@ -79,24 +94,36 @@ export function PassageSimulator({ initial, options, taskInfo, referenceMetrics 
         return data as QueryPayload
       })
     Promise.all([search, new Promise<void>(resolve => setTimeout(resolve, reduced ? 0 : 650))])
-      .then(([data]) => { if (!controller.signal.aborted) setPayload(data) })
+      .then(([data]) => {
+        if (controller.signal.aborted) return
+        setPayload(data)
+        autoTimer.current = setTimeout(() => { if (!controller.signal.aborted) startReplay() }, AUTO_REPLAY_DELAY_MS)
+      })
       .catch(error => { if (!controller.signal.aborted) setLoadError(error.message) })
       .finally(() => { if (!controller.signal.aborted) setIsLoading(false) })
   }
 
-  function replay() {
-    if (!current || isLoading) return
-    if (timer.current) clearTimeout(timer.current)
+  function startReplay() {
+    clearPlayback()
     setOpenId(null)
     setPhase('before')
-    requestAnimationFrame(() => {
+    replayFrame.current = requestAnimationFrame(() => {
+      replayFrame.current = null
       setPhase('scoring')
-      timer.current = setTimeout(() => setPhase('after'), reduced ? 100 : 2250)
+      timer.current = setTimeout(() => {
+        timer.current = null
+        setPhase('after')
+      }, reduced ? 100 : 2250)
     })
   }
 
+  function replay() {
+    if (!current) return
+    startReplay()
+  }
+
   function reset() {
-    if (timer.current) clearTimeout(timer.current)
+    clearPlayback()
     setOpenId(null)
     setPhase('before')
   }
@@ -120,9 +147,17 @@ export function PassageSimulator({ initial, options, taskInfo, referenceMetrics 
   return <main className="site-shell passage-site">
     <header className="site-header page-wrap"><div className="brand"><RouteMark className="brand-mark" /><span>Rerank Lab</span></div><nav className="dataset-nav" aria-label="Experiment dataset"><a href="/">WSJ</a><a href="/passages" aria-current="page">MS MARCO</a></nav><ThemeToggle /></header>
     <div className="page-wrap">
-      <section className="hero passage-hero" aria-labelledby="passage-title"><div className="hero-copy"><h1 id="passage-title">Passages, reranked.</h1><p>Compare JEV on the original supplied passages with a monoBERT reference ranking. The candidate set stays fixed.</p></div></section>
+      <section className="hero passage-hero" aria-labelledby="passage-title">
+        <div className="hero-copy">
+          <h1 id="passage-title">Passages, reranked.</h1>
+          <p><a href="https://microsoft.github.io/msmarco/Datasets.html" target="_blank" rel="noreferrer">MS MARCO v1</a> contains 8,841,823 web passages and real search queries. This <a href="https://trec.nist.gov/data/deep2019.html" target="_blank" rel="noreferrer">TREC DL 2019</a> replay uses 41,042 supplied query–passage pairs across 43 judged queries. monoBERT gives us a baseline reference order; JEV reranks their original passage text.</p>
+        </div>
+      </section>
 
-      <section className="control-room" aria-label="Choose an MS MARCO query"><div className="control-group query-control"><label className="control-label" htmlFor="passage-query">Search query</label><Select id="passage-query" value={qid} onChange={event => changeQuery(event.target.value)}>{options.map(option => <option key={option.id} value={option.id}>{option.id} · {option.text}</option>)}</Select></div><p className="control-context">MS MARCO v1 / TREC DL 2019 · Original passage text</p></section>
+      <section className="control-room" aria-label="Choose an MS MARCO query">
+        <div className="control-group query-control"><label className="control-label" htmlFor="passage-query">Search query</label><Select id="passage-query" value={qid} onChange={event => changeQuery(event.target.value)}>{options.map(option => <option key={option.id} value={option.id}>{option.id} · {option.text}</option>)}</Select></div>
+        <p className="control-context" aria-live="polite">{isLoading ? 'Loading monoBERT results…' : loadError ? 'Results unavailable' : phase === 'scoring' ? 'JEV reranking…' : phase === 'after' ? 'JEV order' : 'monoBERT order'}</p>
+      </section>
 
       <section className="metrics-section" aria-labelledby="passage-metric-title"><div className="section-heading"><div><h2 id="passage-metric-title">Ranking quality</h2><p>Query {qid}: <strong>{current ? payload.text : 'Loading…'}</strong> · full candidate list</p></div></div><div className="metric-board"><div className="metric-header"><span>Metric</span><span>monoBERT</span><span>JEV</span></div>{metricLabels.map(({ key, label, help }) => {
         const before = current ? payload.beforeMetrics[key] : 0
@@ -131,7 +166,7 @@ export function PassageSimulator({ initial, options, taskInfo, referenceMetrics 
         return <div className={`metric-row ${key === 'ndcg_cut_10' ? 'metric-primary' : ''}`} key={key}><div className="metric-name"><span>{label}</span><span className="metric-help" title={help} aria-label={help}><InformationCircleIcon className="size-3.5" /></span></div><div className="metric-before">{current ? <AnimatedNumber value={before} animateIn /> : '—'}</div><div className={`metric-after ${afterShown && delta >= 0 ? 'improved' : ''} ${afterShown && delta < 0 ? 'declined' : ''}`}>{current ? <AnimatedNumber value={after} active={afterShown} /> : '—'}{afterShown && <span className="metric-delta">{delta >= 0 ? '+' : ''}{delta.toFixed(4)}</span>}</div></div>
       })}</div><p className="metric-footnote">nDCG@10 uses grades 0–3; other metrics count grades 2–3 as relevant.</p></section>
 
-      <section className="ranking-section" aria-labelledby="passage-rank-title"><div className="section-heading ranking-heading"><div><h2 id="passage-rank-title">Results</h2><p>Top 10 shown · same candidates</p></div><label className="judgment-toggle"><input type="checkbox" checked={showGrades} onChange={event => setShowGrades(event.target.checked)} /><span className="toggle-track"><span /></span> NIST grades</label></div><div className="ranking-toolbar"><div className="ranking-status"><span className={`status-lamp ${isLoading ? 'searching' : phase}`} /><strong>{isLoading ? 'Loading monoBERT results…' : loadError ? 'Results unavailable' : phase === 'after' ? 'JEV order' : phase === 'scoring' ? 'Scoring' : 'monoBERT order'}</strong></div><div className="toolbar-actions">{afterShown && <button type="button" className="quiet-action" onClick={reset}><ArrowPathIcon className="size-4" /> Reset</button>}<Button type="button" color="emerald" onClick={replay} disabled={!current || phase === 'scoring'}><PlayIcon data-slot="icon" />Replay JEV</Button></div></div>{isLoading && <div className="replay-progress" role="status" aria-label="Loading the saved monoBERT reference ranking"><span className="search-progress-fill" /></div>}{phase === 'scoring' && <div className="replay-progress" role="status"><span className="replay-progress-fill" /><span className="sr-only">Playing back recorded passage scores before reordering.</span></div>}{loadError && <div className="inline-error">{loadError}</div>}{!payload.contentAvailable && <div className="content-alert"><DocumentTextIcon className="size-5" /><span>Passage text is not installed on this server. Rankings still replay; prepare the local licensed TREC DL 2019 source files to inspect passages and exact calls.</span></div>}{!current ? <div className="ranking-loading">{loadError ? 'Results unavailable.' : 'Loading saved monoBERT results…'}</div> : <ol className="result-list"><AnimatePresence initial={false} mode="popLayout">{visible.map((docid, index) => {
+      <section className="ranking-section" aria-labelledby="passage-rank-title"><div className="section-heading ranking-heading"><div><h2 id="passage-rank-title">Results</h2><p>Top 10 shown · same candidates</p></div><label className="judgment-toggle"><input type="checkbox" checked={showGrades} onChange={event => setShowGrades(event.target.checked)} /><span className="toggle-track"><span /></span> NIST grades</label></div><div className="ranking-toolbar"><div className="ranking-status"><span className={`status-lamp ${isLoading ? 'searching' : phase}`} /><strong>{isLoading ? 'Loading monoBERT results…' : loadError ? 'Results unavailable' : phase === 'after' ? 'JEV order' : phase === 'scoring' ? 'Scoring' : 'monoBERT order'}</strong></div><div className="toolbar-actions">{afterShown && <button type="button" className="quiet-action" onClick={reset}><ArrowPathIcon className="size-4" /> Reset</button>}<Button type="button" color="emerald" onClick={replay} disabled={!current || phase === 'scoring'}><PlayIcon data-slot="icon" />Replay JEV</Button></div></div>{isLoading && <div className="replay-progress" role="status" aria-label="Loading the saved monoBERT reference ranking"><span className="search-progress-fill" /></div>}{phase === 'scoring' && <div className="replay-progress" role="status"><span className="replay-progress-fill" /><span className="sr-only">Playing back recorded passage scores before reordering.</span></div>}{loadError && <div className="inline-error">{loadError}</div>}{!payload.contentAvailable && <div className="content-alert"><DocumentTextIcon className="size-5" /><span>Passage text is not installed on this server. Rankings still replay; prepare the local licensed TREC DL 2019 source files to inspect passages and exact calls.</span></div>}{!current ? <div className="ranking-loading" style={loadingHeight ? { minHeight: loadingHeight } : undefined}>{loadError ? 'Results unavailable.' : 'Loading saved monoBERT results…'}</div> : <ol className="result-list" ref={resultList}><AnimatePresence initial={false} mode="popLayout">{visible.map((docid, index) => {
         const doc = payload.documents[docid]
         if (!doc) return null
         const isOpen = openId === docid

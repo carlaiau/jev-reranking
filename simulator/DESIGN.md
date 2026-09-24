@@ -1,6 +1,6 @@
 # A quiet ranking workspace
 
-The result order is the visual explanation. Choosing a query replays its saved retrieval step; the JEV replay then moves the rows and changes the metrics.
+The result order is the visual explanation. Choosing a query replays its saved retrieval step; JEV then moves the rows and changes the metrics automatically after a short pause.
 
 ## Layout and type
 
@@ -11,7 +11,7 @@ The result order is the visual explanation. Choosing a query replays its saved r
 
 ## Interaction
 
-- WSJ shows the fixed BM25 ranking followed by complete-document JEV reranking. MS MARCO loads its saved monoBERT reference ranking, then shows JEV on the original supplied passage text. Changing the query starts the first step; the table's Replay JEV button starts the second.
+- WSJ shows the fixed BM25 ranking followed by complete-document JEV reranking. MS MARCO loads its saved monoBERT reference ranking, then shows JEV on the original supplied passage text. The second step starts automatically after initial load or a query change; the table's Replay JEV button repeats it. The query selector remains pinned while the results scroll beneath it.
 - Ten results remain visible. Human judgments can be hidden, and each result opens source details and its recorded JEV call.
 - Score digits and result positions animate during replay. Reduced-motion users receive an immediate, readable change.
 - Theme choice persists locally. The toggle and all controls stay reachable on narrow screens.

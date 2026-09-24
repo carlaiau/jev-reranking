@@ -23,6 +23,7 @@ import type { getQueryPayload } from '@/lib/server-data'
 type QueryPayload = NonNullable<ReturnType<typeof getQueryPayload>>
 type Option = { id: string; text: string }
 type Phase = 'before' | 'scoring' | 'after'
+const AUTO_REPLAY_DELAY_MS = 2200
 export type DocumentPayload = {
   docid: string
   title: string
@@ -102,14 +103,27 @@ export function Simulator({ initial, options, taskInfo, source, aggregate }: {
   const [documentError, setDocumentError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [loadingHeight, setLoadingHeight] = useState<number | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const autoTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const replayFrame = useRef<number | null>(null)
+  const resultList = useRef<HTMLOListElement | null>(null)
   const searchController = useRef<AbortController | null>(null)
   const reduced = useReducedMotion()
 
-  useEffect(() => () => {
-    if (timer.current) clearTimeout(timer.current)
-    searchController.current?.abort()
+  useEffect(() => {
+    autoTimer.current = setTimeout(startReplay, AUTO_REPLAY_DELAY_MS)
+    return () => {
+      clearPlayback()
+      searchController.current?.abort()
+    }
   }, [])
+
+  function clearPlayback() {
+    if (timer.current) clearTimeout(timer.current)
+    if (autoTimer.current) clearTimeout(autoTimer.current)
+    if (replayFrame.current !== null) cancelAnimationFrame(replayFrame.current)
+  }
 
   const current = !isLoading && payload.id === qid && payload.task === task
   const visible = phase === 'after' ? payload.after : payload.before
@@ -117,7 +131,8 @@ export function Simulator({ initial, options, taskInfo, source, aggregate }: {
   const activeTask = taskInfo[task]
 
   function changeQuery(value: string) {
-    if (timer.current) clearTimeout(timer.current)
+    clearPlayback()
+    if (resultList.current) setLoadingHeight(resultList.current.offsetHeight)
     searchController.current?.abort()
     const controller = new AbortController()
     searchController.current = controller
@@ -133,24 +148,36 @@ export function Simulator({ initial, options, taskInfo, source, aggregate }: {
         return data as QueryPayload
       })
     Promise.all([search, new Promise<void>(resolve => setTimeout(resolve, reduced ? 0 : 650))])
-      .then(([data]) => { if (!controller.signal.aborted) setPayload(data) })
+      .then(([data]) => {
+        if (controller.signal.aborted) return
+        setPayload(data)
+        autoTimer.current = setTimeout(() => { if (!controller.signal.aborted) startReplay() }, AUTO_REPLAY_DELAY_MS)
+      })
       .catch(error => { if (!controller.signal.aborted) setLoadError(error.message) })
       .finally(() => { if (!controller.signal.aborted) setIsLoading(false) })
   }
 
-  function replay() {
-    if (!current || isLoading) return
-    if (timer.current) clearTimeout(timer.current)
+  function startReplay() {
+    clearPlayback()
     setOpenId(null)
     setPhase('before')
-    requestAnimationFrame(() => {
+    replayFrame.current = requestAnimationFrame(() => {
+      replayFrame.current = null
       setPhase('scoring')
-      timer.current = setTimeout(() => setPhase('after'), reduced ? 100 : 2250)
+      timer.current = setTimeout(() => {
+        timer.current = null
+        setPhase('after')
+      }, reduced ? 100 : 2250)
     })
   }
 
+  function replay() {
+    if (!current) return
+    startReplay()
+  }
+
   function reset() {
-    if (timer.current) clearTimeout(timer.current)
+    clearPlayback()
     setOpenId(null)
     setPhase('before')
   }
@@ -183,7 +210,7 @@ export function Simulator({ initial, options, taskInfo, source, aggregate }: {
         <section className="hero" aria-labelledby="page-title">
           <div className="hero-copy">
             <h1 id="page-title">BM25 retrieves. JEV reranks.</h1>
-            <p>Explore the TREC-1 Wall Street Journal subset: 173,252 indexed articles across its 1987–1992 volumes, about 0.5 GB of source text. Each saved BM25 search returns 1,000 articles; JEV reranks the first 100.</p>
+            <p>Explore the TREC-1 Wall Street Journal subset: 173,252 indexed articles across its 1987–1992 volumes, about 0.5 GB of source text. Each saved BM25 search returns 1,000 articles; JEV scores the first 100 as complete documents.</p>
             <a className="collection-source" href="https://trec.nist.gov/pubs/trec8/papers/overview_8.pdf" target="_blank" rel="noreferrer">NIST collection statistics <ArrowTopRightOnSquareIcon className="size-4" /></a>
           </div>
         </section>
@@ -192,7 +219,7 @@ export function Simulator({ initial, options, taskInfo, source, aggregate }: {
           <div className="control-group query-control"><label className="control-label" htmlFor="query-select">Search query</label><Select id="query-select" value={qid} onChange={event => changeQuery(event.target.value)}>
             {options.map(option => <option key={option.id} value={option.id}>{option.id} · {option.text}</option>)}
           </Select></div>
-          <p className="control-context">WSJ / TREC-1 · Complete-document JEV · Fixed candidates</p>
+          <p className="control-context" aria-live="polite">{isLoading ? 'Searching BM25…' : loadError ? 'Search unavailable' : phase === 'scoring' ? 'JEV reranking…' : phase === 'after' ? 'JEV order' : 'BM25 order'}</p>
         </section>
 
         <section className="metrics-section" aria-labelledby="metric-title">
@@ -226,7 +253,7 @@ export function Simulator({ initial, options, taskInfo, source, aggregate }: {
           {phase === 'scoring' && <div className="replay-progress" role="status"><span className="replay-progress-fill" /><span className="sr-only">Playing back recorded JEV scores before reordering.</span></div>}
           {loadError && <div className="inline-error">{loadError} <button type="button" onClick={() => changeQuery(source.defaultQuery)}>Return to the default query</button></div>}
           {!payload.contentAvailable && <div className="content-alert"><DocumentTextIcon className="size-5" /><span>Article names and redacted input excerpts are not installed on this server. Rankings and measured scores still replay.</span></div>}
-          {!current ? <div className="ranking-loading">{loadError ? 'Search unavailable.' : 'Replaying saved BM25 search…'}</div> : <ol className="result-list">
+          {!current ? <div className="ranking-loading" style={loadingHeight ? { minHeight: loadingHeight } : undefined}>{loadError ? 'Search unavailable.' : 'Replaying saved BM25 search…'}</div> : <ol className="result-list" ref={resultList}>
             <AnimatePresence initial={false} mode="popLayout">
               {visible.map((docid, index) => {
                 const doc = payload.documents[docid]

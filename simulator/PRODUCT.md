@@ -28,12 +28,13 @@ The primary demonstration is the fixed WSJ stage-1 BM25 ranking across 50 TREC t
 
 ## Capabilities and Constraints
 
-- Visitors choose a dataset and query to replay the saved initial ranking, inspect ranked results and human judgments, inspect the request shape and recorded JEV answer, then use Replay JEV to animate the rerank. WSJ shows names and redacted input excerpts; MS MARCO can show supplied passage text.
+- Visitors choose a dataset and query to replay the saved initial ranking, inspect ranked results and human judgments, and inspect the request shape and recorded JEV answer. JEV reranking begins automatically after a short pause; Replay JEV repeats it on demand. The query selector remains available while scrolling. WSJ shows names and redacted input excerpts; MS MARCO can show supplied passage text.
 - Show measured metrics before and after. WSJ uses top-100 MAP as the headline metric, with P@10, Rprec, bpref and reciprocal rank evaluated at the same cutoff. Its fixed full-run MAP remains documented separately. MS MARCO uses nDCG@10 as its headline metric.
 - The WSJ stage-1 ranking is the fixed BM25 run. The MS MARCO supplied candidate file is ID sorted, not a lexical ranking; any before view for that task uses monoBERT and must say so.
 - Never invent scores, judgments, content, timing or cost. Playback is local and makes no model calls.
 - Collection text and response caches stay outside Git. Full WSJ article text never reaches browser responses.
 - The WSJ interface uses complete-document JEV only. The MS MARCO interface uses the original supplied passage text only.
+- The MS MARCO header explains the 8,841,823-passage corpus and the 43-query, 41,042-pair TREC DL 2019 replay, distinguishing that subset from the full collection.
 - Light mode is the default; dark mode is available from the header.
 - Mobile web use is a primary requirement. Animations need a reduced-motion path.
 

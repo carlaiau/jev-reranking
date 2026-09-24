@@ -1,6 +1,6 @@
 # Rerank Lab
 
-A mobile-first Next.js replay of completed JEV reranking experiments. The lead route reorders the fixed WSJ BM25 **with feedback** top-100 candidate set using complete-document JEV scores. `/passages` compares JEV on original MS MARCO v1 / TREC DL 2019 passage text against the local monoBERT reference ranking. Choosing a query replays its saved initial ranking; Replay JEV in the results table starts the reranking step. Both pages use one saved reranking strategy and offer light and dark modes. Playback makes no live model calls.
+A mobile-first Next.js replay of completed JEV reranking experiments. The lead route reorders the fixed WSJ BM25 **with feedback** top-100 candidate set using complete-document JEV scores. `/passages` compares JEV on original MS MARCO v1 / TREC DL 2019 passage text against the local monoBERT reference ranking. Each page automatically plays the saved JEV rerank a few seconds after loading its initial results; choosing a query first replays its saved BM25 search or monoBERT reference load. The query selector stays at the top while scrolling, and Replay JEV starts the rerank again on demand. Both pages offer light and dark modes. Playback makes no live model calls.
 
 ## Run locally
 
@@ -27,6 +27,7 @@ The prepared text is written to `../.cache/reranking-simulator/`, which Git igno
 - The local text preparation checks JEV payload hashes. The WSJ call inspector shows a redacted request shape and recorded score/model/usage fields; MS MARCO displays the saved passage input. Both are replays, not fresh model responses.
 - WSJ query and aggregate metrics in the simulator use `trec_eval -c -M100` on the saved run and qrels. This evaluates ranks 1–100, the only positions JEV reranks. The UI shows ten rows. Top-100 MAP is 0.1729 for BM25 and 0.2263 for complete-document JEV. The original full 1,000-result MAP values remain 0.2521 and 0.3055 in the experiment reports; these are different evaluation scopes.
 - The WSJ corpus is the TREC-1 subset of TREC disks 1 and 2: 173,252 indexed articles across the 1987–1992 volumes, about 0.5 GB of source text. The simulator links to NIST collection statistics; no article body is bundled.
+- The MS MARCO v1 passage corpus contains 8,841,823 passages. This TREC DL 2019 replay uses 41,042 supplied query–passage pairs across 43 judged queries. The supplied file order is not a lexical ranking; the page starts from the saved monoBERT reference.
 - MS MARCO v1 candidate file order is by passage ID and has no lexical-ranking meaning. The before view is the measured monoBERT ranking; JEV receives the original supplied passage text. Its primary metric is graded nDCG@10; binary metrics count grades 2–3 as relevant. Its retrieval time is unavailable.
 - The default queries are illustrative examples selected for this teaching interface. They are not held-out evidence for tuning or claims that every query improves.
 
