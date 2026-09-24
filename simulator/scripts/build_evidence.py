@@ -15,6 +15,7 @@ TASKS = {
     "passages": RESULTS / "jev-passages-maxp-top100-20260918-retry",
 }
 METRICS = ("map", "P_10", "Rprec", "bpref", "recip_rank")
+TOP100_METRICS = ("ndcg_cut_10", "map", "P_10", "bpref", "recall_100")
 
 
 def load_run(path):
@@ -34,20 +35,26 @@ def load_metrics(path):
     return output
 
 
-def evaluate_top100(qrels_path, run_path, topics):
+def evaluate_top100(qrels_path, run_path, topics, qrels, run):
     command = [
         "trec_eval", "-c", "-M100", "-q",
-        "-m", "map", "-m", "P.10", "-m", "Rprec", "-m", "bpref", "-m", "recip_rank",
+        "-m", "ndcg_cut.10", "-m", "map", "-m", "P.10", "-m", "bpref", "-m", "recall.100",
         str(qrels_path), str(run_path),
     ]
     result = subprocess.run(command, check=True, capture_output=True, text=True)
     values = defaultdict(dict)
     for line in result.stdout.splitlines():
         name, qid, value = line.split()
-        if name in METRICS:
+        if name in TOP100_METRICS:
             values[qid][name] = float(value)
-    if set(values) != set(topics) | {"all"} or any(set(row) != set(METRICS) for row in values.values()):
+    if set(values) != set(topics) | {"all"} or any(set(row) != set(TOP100_METRICS) for row in values.values()):
         raise ValueError(f"Incomplete top-100 evaluation for {run_path}")
+    for qid in topics:
+        top_ten = run[qid][:10]
+        if len(top_ten) != 10:
+            raise ValueError(f"Fewer than ten displayed results for {qid}")
+        values[qid]["judged_10"] = sum(qrels[qid].get(docid, -1) >= 0 for docid in top_ten) / 10
+    values["all"]["judged_10"] = round(sum(values[qid]["judged_10"] for qid in topics) / len(topics), 4)
     return {"all": values["all"], "queries": {qid: values[qid] for qid in topics}}
 
 
@@ -152,10 +159,14 @@ def main():
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(output, separators=(",", ":"), ensure_ascii=False) + "\n")
+    before_top100 = evaluate_top100(BASE / "qrels.txt", BASE / "run.trec", topics, qrels, baseline)
+    after_top100 = evaluate_top100(BASE / "qrels.txt", TASKS["documents"] / "run.trec", topics, qrels, task_data["documents"]["run"])
+    if any(before_top100["queries"][qid]["recall_100"] != after_top100["queries"][qid]["recall_100"] for qid in topics):
+        raise ValueError("Reranking changed the top-100 candidate set")
     top100 = {
         "cutoff": 100,
-        "before": evaluate_top100(BASE / "qrels.txt", BASE / "run.trec", topics),
-        "after": evaluate_top100(BASE / "qrels.txt", TASKS["documents"] / "run.trec", topics),
+        "before": before_top100,
+        "after": after_top100,
     }
     TOP100_OUT.write_text(json.dumps(top100, indent=2) + "\n")
     print(f"Wrote {OUT} for {len(output['queries'])} queries; no article text included")

@@ -8,9 +8,11 @@ The [interactive reranking simulator](simulator/README.md) replays the fixed WSJ
 In the web app's WSJ view, each saved BM25 search has 1,000 results, but JEV
 reranks only positions 1–100; positions 101–1,000 keep their BM25 order. The
 page displays the top 10 and evaluates WSJ metrics with a rank-100 cutoff
-(`trec_eval -c -M100`). Its MAP@100 is 0.1729 → 0.2263, while the WSJ table
-below reports full 1,000-result MAP of 0.2521 → 0.3055. The MS MARCO passage
-view reranks all supplied candidates and does not use this WSJ cutoff.
+(`trec_eval -c -M100`). Its nDCG@10 is 0.4640 → 0.6634 and MAP@100 is
+0.1729 → 0.2263, while the WSJ table below reports full 1,000-result MAP of
+0.2521 → 0.3055. The MS MARCO web view separately projects saved scores onto
+monoBERT's first 100 candidates per query; its benchmark table below still
+reports the completed full-candidate experiment.
 
 ## Benchmark 1: MS MARCO v1 passage reranking (TREC DL 2019)
 
