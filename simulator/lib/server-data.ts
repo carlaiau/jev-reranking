@@ -52,6 +52,21 @@ function passageTitle(text: string | undefined, docid: string): string {
   return first.length > 112 ? `${first.slice(0, 109).trimEnd()}…` : first
 }
 
+function redactedWsjExcerpt(text: string | undefined, sentTokens: number): string {
+  const marker = `[REDACTED_TOKENS · ${sentTokens} BERT source tokens sent]`
+  if (!text) return marker
+  const words = text.trim().split(/\s+/)
+  if (words.length <= 24) return marker
+  const excerpt = words.slice(0, 12).join(' ').slice(0, 100).trimEnd()
+  return `${excerpt} ${marker}`
+}
+
+function wsjTitle(document: LocalDocument | undefined, docid: string): string {
+  const title = document?.title.replace(/\s+/g, ' ').trim()
+  if (!title) return docid
+  return title.length > 140 ? `${title.slice(0, 139).trimEnd()}…` : title
+}
+
 export function getQueryPayload(qid: string, task: TaskId) {
   const query = evidence.queries[qid]
   if (!query) return null
@@ -70,7 +85,7 @@ export function getQueryPayload(qid: string, task: TaskId) {
     calls: taskEvidence.calls,
     model: evidence.tasks[task].model,
     documents: Object.fromEntries(ids.map(docid => [docid, {
-      title: documents?.[docid]?.title || docid,
+      title: wsjTitle(documents?.[docid], docid),
       judgment: query.judgments[docid] ?? null,
       hasContent: Boolean(documents?.[docid]),
       originalRank: query.before.indexOf(docid) + 1,
@@ -91,9 +106,13 @@ export function getDocumentPayload(qid: string, task: TaskId, docid: string) {
   const passages = localPassages()?.[qid]?.[docid]
   const calls = records.map(record => ({
     ...record,
-    payload: task === 'documents' ? document?.text ?? null : passages?.[String(record.passage_index)] ?? null,
+    payload: redactedWsjExcerpt(
+      task === 'documents' ? document?.text : passages?.[String(record.passage_index)],
+      task === 'documents' ? record.document_tokens! : record.token_end! - record.token_start!,
+    ),
+    redacted: true,
   }))
-  return { docid, title: document?.title || docid, text: document?.text || null, calls }
+  return { docid, title: wsjTitle(document, docid), text: null, calls }
 }
 
 export function getMsmarcoOptions() {

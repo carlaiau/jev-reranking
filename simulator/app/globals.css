@@ -181,6 +181,7 @@ button, a, select { -webkit-tap-highlight-color: transparent; }
 .pane-head { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; color: var(--chalk); font-size: .82rem; }
 .pane-head span { color: var(--dim); font-family: var(--font-code); font-size: .7rem; }
 .article-pane p { max-height: 370px; overflow-y: auto; margin: 14px 0 0; padding-right: 15px; color: #d2dbd6; font-size: .88rem; line-height: 1.75; white-space: pre-wrap; }
+.call-redaction-note { margin: 8px 0 17px; color: var(--dim); font-size: .72rem; line-height: 1.5; }
 .call-pane { padding: 20px 28px 28px; }
 .call-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 22px; }
 .call-summary > div { border-top: 1px solid #607174; padding-top: 10px; }

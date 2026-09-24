@@ -39,11 +39,6 @@ def headlines(collection, wanted):
     return found
 
 
-def fallback_title(text, docid):
-    sentence = text.split(". ", 1)[0]
-    return sentence[:120].strip() or docid
-
-
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--collection", type=Path, required=True, help="absolute path to the local WSJ collection")
@@ -58,7 +53,7 @@ def main():
         for docid, records in query["tasks"]["documents"]["scores"].items():
             if digest(extracted[docid]) != records[0]["payloadHash"]:
                 raise ValueError(f"Collection text differs from completed JEV payload for {docid}")
-    output = {docid: {"title": headings.get(docid) or fallback_title(text, docid), "text": text} for docid, text in extracted.items()}
+    output = {docid: {"title": headings.get(docid) or docid, "text": text} for docid, text in extracted.items()}
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(json.dumps(output, ensure_ascii=False, separators=(",", ":")) + "\n")
     print(f"Prepared {len(output)} local articles at {OUTPUT}; this path is ignored by Git")
