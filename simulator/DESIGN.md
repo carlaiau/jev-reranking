@@ -1,26 +1,21 @@
-# Signal routing board
+# A quiet ranking workspace
 
-The simulator is a control surface for watching a fixed stream of search candidates change order. Every ranking position is a lane. The active query is the signal being routed; JEV scores are switches, and judgment marks stay attached to documents as they move.
+The result order is the visual explanation. Choosing a query replays its saved retrieval step; the JEV replay then moves the rows and changes the metrics.
 
-## Visual system
+## Layout and type
 
-- Deep ink panels with warm chalk text, hairline copper route marks, one electric mint success signal, and amber for pending decisions. Human judgments use a distinct grade treatment and explicit words; color is never the only label.
-- A compact expressive grotesk for headings, a readable sans for explanations, and monospaced figures only for document IDs, score values and call payloads.
-- Square-edged, precisely spaced control strips; softly rounded buttons and select controls inherited from the sibling Catalyst set. No decorative card grid.
-- A broad ranking field on desktop. On narrow screens, the same lane rows become a single column, with controls and metric comparison visible before the list.
+- One broad reading column: query, quality table, ranked results, then aggregate evidence.
+- Light mode by default: warm off-white ground, white data surfaces, deep green for the one primary action and improvement. Dark mode keeps the same hierarchy.
+- One text family with a restrained scale. Monospace appears only for document IDs and request JSON.
+- Horizontal row dividers support scanning. No decorative rails, status glows, stage cards, or repeated labels.
 
-## First surface
+## Interaction
 
-The first viewport states the idea in one sentence: BM25 retrieves; JEV judges the candidates again. A fixed pipeline strip identifies the saved 1,000-result WSJ stage-1 run, top-100 JEV scoring boundary, and unchanged candidate pool. Task and query controls sit directly above an always-visible before/after metric scoreline. The ranking field shows the first ten results and one clear replay action.
+- WSJ shows the fixed BM25 ranking followed by complete-document JEV reranking. MS MARCO loads its saved monoBERT reference ranking, then shows JEV on the original supplied passage text. Changing the query starts the first step; the table's Replay JEV button starts the second.
+- Ten results remain visible. Human judgments can be hidden, and each result opens source details and its recorded JEV call.
+- Score digits and result positions animate during replay. Reduced-motion users receive an immediate, readable change.
+- Theme choice persists locally. The toggle and all controls stay reachable on narrow screens.
 
-## Signature interaction
+## Evidence boundary
 
-On replay, score lamps light in short staggered groups along the candidate lanes. The list then reorders in place with position-preserving animation; judgment marks travel with their documents. Metric digits count to recorded values. Every result can open its article, the request shape and the recorded score/usage. Replay is deterministic and never calls JEV.
-
-## Motion grammar
-
-Motion communicates state and movement. Lanes cross only during reranking. Numerals animate at their fixed positions. An ambient rail scan is quiet and slow. Reduced-motion users receive instant state changes and fully readable before/after views.
-
-## Product truth
-
-WSJ is the lead because the recorded stage-1 ranking is BM25. The two task choices are complete-document and passage-MaxP JEV reranking of the same saved top-100 candidates. Text stays outside Git and is read by the local server from a provisioned collection file. Aggregate metrics, query metrics, ranks, judgments and scores come from completed artifacts.
+Query and aggregate metrics come from saved runs. WSJ article names may appear, but full article text never enters the browser; the call view shows only a short excerpt and the recorded source-token count. The MS MARCO comparison starts from monoBERT, since the supplied candidate file order is not a lexical ranking.

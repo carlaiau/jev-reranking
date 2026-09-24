@@ -24,15 +24,17 @@ An interactive replay of this repository's measured JEV experiments, with proven
 
 ## Operating Context
 
-The primary demonstration is the fixed WSJ stage-1 BM25 ranking across 50 TREC topics, followed by the recorded JEV complete-document or passage-MaxP reranking of its top-100 candidates. MS MARCO v1 / TREC DL 2019 is a secondary passage reranking comparison against the local monoBERT reference.
+The primary demonstration is the fixed WSJ stage-1 BM25 ranking across 50 TREC topics, followed by recorded JEV complete-document reranking of its top-100 candidates. MS MARCO v1 / TREC DL 2019 is a secondary original-passage reranking comparison against the local monoBERT reference.
 
 ## Capabilities and Constraints
 
-- Visitors choose a reranking task and query, inspect ranked results, reveal human judgments, expand result text, inspect the request shape and recorded JEV answer, and animate the rerank.
+- Visitors choose a dataset and query to replay the saved initial ranking, inspect ranked results and human judgments, inspect the request shape and recorded JEV answer, then use Replay JEV to animate the rerank. WSJ shows names and redacted input excerpts; MS MARCO can show supplied passage text.
 - Show measured metrics before and after. WSJ uses MAP as the headline metric, with P@10, Rprec, bpref and reciprocal rank. MS MARCO uses nDCG@10 as its headline metric.
 - The WSJ stage-1 ranking is the fixed BM25 run. The MS MARCO supplied candidate file is ID sorted, not a lexical ranking; any before view for that task uses monoBERT and must say so.
 - Never invent scores, judgments, content, timing or cost. Playback is local and makes no model calls.
-- Collection text and response caches stay outside Git. The site may read locally provisioned source data at runtime.
+- Collection text and response caches stay outside Git. Full WSJ article text never reaches browser responses.
+- The WSJ interface uses complete-document JEV only. The MS MARCO interface uses the original supplied passage text only.
+- Light mode is the default; dark mode is available from the header.
 - Mobile web use is a primary requirement. Animations need a reduced-motion path.
 
 ## Evidence on Hand

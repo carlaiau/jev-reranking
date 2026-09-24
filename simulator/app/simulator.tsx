@@ -16,6 +16,7 @@ import {
 } from '@heroicons/react/20/solid'
 import { Button } from '@/components/catalyst/button'
 import { Select } from '@/components/catalyst/select'
+import { ThemeToggle } from '@/components/theme-toggle'
 import type { Evidence, MetricKey, ScoreRecord, TaskId } from '@/lib/evidence'
 import type { getQueryPayload } from '@/lib/server-data'
 
@@ -80,7 +81,7 @@ function Judgment({ value }: { value: number | null }) {
   if (value === null) return <span className="judgment judgment-unjudged">Unjudged</span>
   return value > 0
     ? <span className="judgment judgment-relevant"><CheckIcon className="size-3.5" /> Relevant</span>
-    : <span className="judgment judgment-irrelevant">Judged · not relevant</span>
+    : <span className="judgment judgment-irrelevant">Not relevant</span>
 }
 
 export function Simulator({ initial, options, taskInfo, source }: {
@@ -90,7 +91,7 @@ export function Simulator({ initial, options, taskInfo, source }: {
   source: Evidence['source']
 }) {
   const [qid, setQid] = useState(initial.id)
-  const [task, setTask] = useState<TaskId>(initial.task)
+  const task: TaskId = 'documents'
   const [payload, setPayload] = useState<QueryPayload>(initial)
   const [phase, setPhase] = useState<Phase>('before')
   const [showJudgments, setShowJudgments] = useState(true)
@@ -101,44 +102,40 @@ export function Simulator({ initial, options, taskInfo, source }: {
   const [isLoading, setIsLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const searchController = useRef<AbortController | null>(null)
   const reduced = useReducedMotion()
 
-  useEffect(() => {
-    if (payload.id === qid && payload.task === task) return
-    const controller = new AbortController()
-    setIsLoading(true)
-    setLoadError(null)
-    fetch(`/api/query?qid=${encodeURIComponent(qid)}&task=${task}`, { signal: controller.signal })
-      .then(async response => {
-        const data = await response.json()
-        if (!response.ok) throw new Error(data.error || 'Could not load the saved query.')
-        setPayload(data as QueryPayload)
-      })
-      .catch(error => { if (error.name !== 'AbortError') setLoadError(error.message) })
-      .finally(() => { if (!controller.signal.aborted) setIsLoading(false) })
-    return () => controller.abort()
-  }, [payload.id, payload.task, qid, task])
+  useEffect(() => () => {
+    if (timer.current) clearTimeout(timer.current)
+    searchController.current?.abort()
+  }, [])
 
-  useEffect(() => () => { if (timer.current) clearTimeout(timer.current) }, [])
-
-  const current = payload.id === qid && payload.task === task
+  const current = !isLoading && payload.id === qid && payload.task === task
   const visible = phase === 'after' ? payload.after : payload.before
   const afterShown = phase === 'after'
   const activeTask = taskInfo[task]
   const aggregateBefore = { map: 0.2521, P_10: 0.4460, Rprec: 0.2989, bpref: 0.3178, recip_rank: 0.6271 }
 
-  function changeTask(value: TaskId) {
-    if (timer.current) clearTimeout(timer.current)
-    setTask(value)
-    setPhase('before')
-    setOpenId(null)
-  }
-
   function changeQuery(value: string) {
     if (timer.current) clearTimeout(timer.current)
+    searchController.current?.abort()
+    const controller = new AbortController()
+    searchController.current = controller
     setQid(value)
     setPhase('before')
     setOpenId(null)
+    setIsLoading(true)
+    setLoadError(null)
+    const search = fetch(`/api/query?qid=${encodeURIComponent(value)}&task=${task}`, { signal: controller.signal })
+      .then(async response => {
+        const data = await response.json()
+        if (!response.ok) throw new Error(data.error || 'Could not load the saved query.')
+        return data as QueryPayload
+      })
+    Promise.all([search, new Promise<void>(resolve => setTimeout(resolve, reduced ? 0 : 650))])
+      .then(([data]) => { if (!controller.signal.aborted) setPayload(data) })
+      .catch(error => { if (!controller.signal.aborted) setLoadError(error.message) })
+      .finally(() => { if (!controller.signal.aborted) setIsLoading(false) })
   }
 
   function replay() {
@@ -176,54 +173,38 @@ export function Simulator({ initial, options, taskInfo, source }: {
 
   return (
     <main className="site-shell">
-      <div className="top-line" />
       <header className="site-header page-wrap">
-        <div className="brand"><RouteMark className="brand-mark" /><span>Rerank<span className="brand-light"> Lab</span></span></div>
-        <nav className="dataset-nav" aria-label="Experiment dataset"><a href="/" aria-current="page">WSJ / BM25</a><a href="/passages">MS MARCO passages</a></nav>
-        <div className="header-right"><span className="live-dot" /> Saved experiment replay <span className="header-date">· Sep 2026</span></div>
+        <div className="brand"><RouteMark className="brand-mark" /><span>Rerank Lab</span></div>
+        <nav className="dataset-nav" aria-label="Experiment dataset"><a href="/" aria-current="page">WSJ</a><a href="/passages">MS MARCO</a></nav>
+        <ThemeToggle />
       </header>
 
       <div className="page-wrap">
         <section className="hero" aria-labelledby="page-title">
           <div className="hero-copy">
-            <h1 id="page-title">Search finds candidates.<br /><em>JEV changes the order.</em></h1>
-            <p>Watch a real BM25 + feedback result list move when JEV judges the same articles for relevance. The index stays exactly where it was; the extra compute happens after retrieval.</p>
-            <div className="hero-proof"><span className="proof-pulse" /> 50 TREC topics <span className="hero-separator" /> 1,000 BM25 results each <span className="hero-separator" /> top 100 rescored</div>
-          </div>
-          <div className="signal-diagram" aria-label="BM25 retrieves, JEV scores the top 100, ranked results are reordered">
-            <div className="signal-diagram-head"><span>THE SEARCH PATH</span><span>FIXED CANDIDATES</span></div>
-            <div className="signal-stage"><span className="stage-index">A</span><span><strong>BM25 + feedback</strong><small>Index + lexical scoring</small></span><span className="stage-count">1,000</span></div>
-            <div className="signal-rail"><span /></div>
-            <div className="signal-stage signal-stage-active"><span className="stage-index">B</span><span><strong>JEV relevance calls</strong><small>Only the first 100 articles</small></span><span className="stage-count">100</span></div>
-            <div className="signal-rail signal-rail-cross"><span /></div>
-            <div className="signal-stage"><span className="stage-index">C</span><span><strong>Reordered results</strong><small>Same documents, new positions</small></span><ArrowRightIcon className="size-4" /></div>
+            <h1 id="page-title">BM25 retrieves. JEV reranks.</h1>
+            <p>Explore a saved WSJ search: 1,000 BM25 results, with the first 100 rescored as complete documents.</p>
           </div>
         </section>
 
-        <section className="control-room" aria-label="Choose a reranking task and search query">
-          <div className="control-top"><h2>Set the experiment</h2><span>WSJ / TREC-1 · fixed stage-1 run</span></div>
-          <div className="controls-grid">
-            <div className="control-group"><label className="control-label">JEV strategy</label><div className="task-switch" role="group" aria-label="JEV reranking strategy">
-              {(['documents', 'passages'] as TaskId[]).map(id => <button key={id} type="button" className={task === id ? 'task-option active' : 'task-option'} onClick={() => changeTask(id)} aria-pressed={task === id}><span>{taskInfo[id].label}</span><small>{id === 'documents' ? '1 call / article' : 'best passage wins'}</small></button>)}
-            </div></div>
-            <div className="control-group query-control"><label className="control-label" htmlFor="query-select">Search query</label><Select id="query-select" value={qid} onChange={event => changeQuery(event.target.value)}>
-              {options.map(option => <option key={option.id} value={option.id}>{option.id} · {option.text}</option>)}
-            </Select></div>
-          </div>
-          <div className="query-note"><InformationCircleIcon className="size-4" /> The wording above is the original TREC topic text sent with each candidate. Human judgments are separate from JEV scores.</div>
+        <section className="control-room" aria-label="Choose a WSJ search query">
+          <div className="control-group query-control"><label className="control-label" htmlFor="query-select">Search query</label><Select id="query-select" value={qid} onChange={event => changeQuery(event.target.value)}>
+            {options.map(option => <option key={option.id} value={option.id}>{option.id} · {option.text}</option>)}
+          </Select></div>
+          <p className="control-context">WSJ / TREC-1 · Complete-document JEV · Fixed candidates</p>
         </section>
 
         <section className="metrics-section" aria-labelledby="metric-title">
-          <div className="section-heading"><div><h2 id="metric-title">What the ranking gets right</h2><p>Query {qid}: <strong>{current ? payload.text : 'Loading…'}</strong> · all values use the complete saved ranking, not just the ten rows shown below.</p></div><span className="section-tag">HIGHER IS BETTER</span></div>
+          <div className="section-heading"><div><h2 id="metric-title">Ranking quality</h2><p>Query {qid}: <strong>{current ? payload.text : 'Loading…'}</strong> · full saved ranking</p></div></div>
           <div className="metric-board">
-            <div className="metric-header"><span>MEASURE</span><span>BEFORE · BM25</span><span>AFTER · JEV</span></div>
+            <div className="metric-header"><span>Metric</span><span>BM25</span><span>JEV</span></div>
             {metricLabels.map(({ key, label, help }) => {
               const before = current ? payload.beforeMetrics[key] : 0
               const after = current ? payload.afterMetrics[key] : 0
               const delta = after - before
               return <div className={`metric-row ${key === 'map' ? 'metric-primary' : ''}`} key={key}>
                 <div className="metric-name"><span>{label}</span><span className="metric-help" title={help} aria-label={help}><InformationCircleIcon className="size-3.5" /></span></div>
-                <div className="metric-before">{current ? <AnimatedNumber value={before} /> : '—'}</div>
+                <div className="metric-before">{current ? <AnimatedNumber value={before} animateIn /> : '—'}</div>
                 <div className={`metric-after ${afterShown && delta >= 0 ? 'improved' : ''} ${afterShown && delta < 0 ? 'declined' : ''}`}>
                   {current ? <AnimatedNumber value={after} active={afterShown} /> : '—'}
                   {afterShown && <span className="metric-delta">{delta >= 0 ? '+' : ''}{delta.toFixed(4)}</span>}
@@ -231,19 +212,19 @@ export function Simulator({ initial, options, taskInfo, source }: {
               </div>
             })}
           </div>
-          <p className="metric-footnote">AP is average precision for this query; the aggregate headline across 50 topics is MAP. A rise on one query is not a claim that every query improves.</p>
         </section>
 
         <section className="ranking-section" aria-labelledby="rank-title">
-          <div className="section-heading ranking-heading"><div><h2 id="rank-title">Follow the results</h2><p>Ten visible lanes from the saved top-100 candidate set.</p></div><label className="judgment-toggle"><input type="checkbox" checked={showJudgments} onChange={event => setShowJudgments(event.target.checked)} /><span className="toggle-track"><span /></span> Show human judgments</label></div>
+          <div className="section-heading ranking-heading"><div><h2 id="rank-title">Results</h2><p>Top 10 shown · first 100 reranked</p></div><label className="judgment-toggle"><input type="checkbox" checked={showJudgments} onChange={event => setShowJudgments(event.target.checked)} /><span className="toggle-track"><span /></span> Human judgments</label></div>
           <div className="ranking-toolbar">
-            <div className="ranking-status"><span className={`status-lamp ${phase}`} /><strong>{phase === 'after' ? 'JEV order' : phase === 'scoring' ? 'Scoring candidates' : 'BM25 order'}</strong><span className="status-note">{phase === 'after' ? 'top 100 reordered' : phase === 'scoring' ? 'recorded calls playing back' : 'fixed lexical ranking'}</span></div>
-            <div className="toolbar-actions">{phase === 'after' && <button type="button" className="quiet-action" onClick={reset}><ArrowPathIcon className="size-4" /> Reset</button>}<Button type="button" color="amber" onClick={replay} disabled={!current || isLoading || phase === 'scoring'}><PlayIcon data-slot="icon" />{phase === 'after' ? 'Replay movement' : phase === 'scoring' ? 'Scoring…' : 'Run JEV replay'}</Button></div>
+            <div className="ranking-status"><span className={`status-lamp ${isLoading ? 'searching' : phase}`} /><strong>{isLoading ? 'Searching BM25…' : loadError ? 'Search unavailable' : phase === 'after' ? 'JEV order' : phase === 'scoring' ? 'Scoring' : 'BM25 order'}</strong></div>
+            <div className="toolbar-actions">{phase === 'after' && <button type="button" className="quiet-action" onClick={reset}><ArrowPathIcon className="size-4" /> Reset</button>}<Button type="button" color="emerald" onClick={replay} disabled={!current || phase === 'scoring'}><PlayIcon data-slot="icon" />Replay JEV</Button></div>
           </div>
+          {isLoading && <div className="replay-progress" role="status" aria-label="Replaying the saved BM25 search"><span className="search-progress-fill" /></div>}
           {phase === 'scoring' && <div className="replay-progress" role="status"><span className="replay-progress-fill" /><span className="sr-only">Playing back recorded JEV scores before reordering.</span></div>}
           {loadError && <div className="inline-error">{loadError} <button type="button" onClick={() => changeQuery(source.defaultQuery)}>Return to the default query</button></div>}
           {!payload.contentAvailable && <div className="content-alert"><DocumentTextIcon className="size-5" /><span>Article names and redacted input excerpts are not installed on this server. Rankings and measured scores still replay.</span></div>}
-          {(!current || isLoading) ? <div className="ranking-loading">Loading saved query evidence…</div> : <ol className="result-list">
+          {!current ? <div className="ranking-loading">{loadError ? 'Search unavailable.' : 'Replaying saved BM25 search…'}</div> : <ol className="result-list">
             <AnimatePresence initial={false} mode="popLayout">
               {visible.map((docid, index) => {
                 const doc = payload.documents[docid]
@@ -254,21 +235,20 @@ export function Simulator({ initial, options, taskInfo, source }: {
                 const movement = doc.originalRank - doc.finalRank
                 return <motion.li key={docid} layout="position" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -14 }} transition={{ layout: { type: 'spring', stiffness: 340, damping: 34 }, opacity: { duration: 0.2 } }} className={`result-row ${isOpen ? 'result-open' : ''}`}>
                   <div className="result-main">
-                    <div className="rank-cell"><span className="rank-number">{String(index + 1).padStart(2, '0')}</span><span className="rank-rail" /></div>
-                    <div className="result-copy"><div className="result-eyeline"><span className="doc-id">{docid}</span>{showJudgments && <Judgment value={doc.judgment} />}</div><button type="button" className="result-title" aria-expanded={isOpen} onClick={() => toggleResult(docid)}>{doc.title}<span className="result-open-icon">{isOpen ? <ChevronUpIcon className="size-4" /> : <ChevronDownIcon className="size-4" />}</span></button><div className="result-subline">{phase === 'after' ? <span className={movement > 0 ? 'moved-up' : movement < 0 ? 'moved-down' : ''}>{movement > 0 ? `↑ ${movement} places from BM25` : movement < 0 ? `↓ ${Math.abs(movement)} places from BM25` : 'Same position'}</span> : <span>BM25 rank #{doc.originalRank}</span>}<span className="subline-dot" /> <span>Open article details and call</span></div></div>
-                    <div className="result-score">{phase !== 'before' && doc.score !== null ? <motion.div initial={{ opacity: 0, y: 7 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: phase === 'scoring' && !reduced ? Math.min(index * 0.13, 1.2) : 0 }}><small>JEV SCORE</small><strong><AnimatedNumber value={doc.score} places={2} animateIn /></strong></motion.div> : <span className="score-pending">JEV<br />pending</span>}</div>
+                    <div className="rank-cell"><span className="rank-number">{String(index + 1).padStart(2, '0')}</span></div>
+                    <div className="result-copy"><div className="result-eyeline"><span className="doc-id">{docid}</span>{showJudgments && <Judgment value={doc.judgment} />}</div><button type="button" className="result-title" aria-expanded={isOpen} onClick={() => toggleResult(docid)}>{doc.title}<span className="result-open-icon">{isOpen ? <ChevronUpIcon className="size-4" /> : <ChevronDownIcon className="size-4" />}</span></button>{phase === 'after' && <div className="result-subline"><span className={movement > 0 ? 'moved-up' : movement < 0 ? 'moved-down' : ''}>{movement > 0 ? `↑ ${movement} from BM25` : movement < 0 ? `↓ ${Math.abs(movement)} from BM25` : 'Same rank'}</span></div>}</div>
+                    <div className="result-score">{phase !== 'before' && doc.score !== null ? <motion.div initial={{ opacity: 0, y: 7 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: phase === 'scoring' && !reduced ? Math.min(index * 0.13, 1.2) : 0 }}><small>JEV</small><strong><AnimatedNumber value={doc.score} places={2} animateIn /></strong></motion.div> : <span className="score-pending">—</span>}</div>
                   </div>
-                  <AnimatePresence initial={false}>{isOpen && <motion.div className="result-details" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: reduced ? 0 : 0.28, ease: [0.16, 1, 0.3, 1] }}><div className="details-inner"><div className="details-tabs" role="tablist" aria-label={`Inspect ${docid}`}><button type="button" role="tab" aria-selected={activeTab === 'article'} onClick={() => setActiveTab('article')}><DocumentTextIcon className="size-4" /> Article details</button><button type="button" role="tab" aria-selected={activeTab === 'call'} onClick={() => setActiveTab('call')}><CommandLineIcon className="size-4" /> JEV call + result</button></div>{documentError ? <div className="inline-error">{documentError}</div> : !details ? <div className="details-loading">Loading the saved result…</div> : activeTab === 'article' ? <div className="article-pane"><div className="pane-head"><strong>{details.title}</strong><span>Full text withheld</span></div><p>WSJ article text is withheld from this browser. The document ID, human judgment, rank, and recorded JEV score remain visible. The call tab shows a short excerpt with the rest redacted.</p></div> : <CallPane details={details} task={task} query={payload.text} question={activeTask.question} />}</div></motion.div>}</AnimatePresence>
+                  <AnimatePresence initial={false}>{isOpen && <motion.div className="result-details" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: reduced ? 0 : 0.28, ease: [0.16, 1, 0.3, 1] }}><div className="details-inner"><div className="details-tabs" role="tablist" aria-label={`Inspect ${docid}`}><button type="button" role="tab" aria-selected={activeTab === 'article'} onClick={() => setActiveTab('article')}><DocumentTextIcon className="size-4" /> Article</button><button type="button" role="tab" aria-selected={activeTab === 'call'} onClick={() => setActiveTab('call')}><CommandLineIcon className="size-4" /> JEV call</button></div>{documentError ? <div className="inline-error">{documentError}</div> : !details ? <div className="details-loading">Loading the saved result…</div> : activeTab === 'article' ? <div className="article-pane"><div className="pane-head"><strong>{details.title}</strong><span>Full text withheld</span></div><p>WSJ text is withheld. The JEV call shows a short, redacted excerpt.</p></div> : <CallPane details={details} task={task} query={payload.text} question={activeTask.question} />}</div></motion.div>}</AnimatePresence>
                 </motion.li>
               })}
             </AnimatePresence>
           </ol>}
-          <div className="ranking-tail"><span>Ranks 11–100 were also rescored. Ranks 101–1,000 remain in the lexical tail.</span><span>{phase === 'after' ? `Recorded query time ${payload.seconds.toFixed(2)} s · ${payload.calls} calls` : 'Press replay to see the measured change.'}</span></div>
+          <div className="ranking-tail"><span>Ranks 101–1,000 keep their BM25 order.</span><span>{phase === 'after' ? `${payload.seconds.toFixed(2)} s · ${payload.calls} recorded calls` : 'Saved experiment replay'}</span></div>
         </section>
 
-        <section className="evidence-section" aria-labelledby="evidence-title"><div className="evidence-intro"><h2 id="evidence-title">Compute at the end of the pipeline</h2><p>The lexical index and candidate set are fixed. JEV changes the order of the first 100 articles without building an embedding index. This is a recorded, uncached run replayed locally, with no API calls from your browser.</p></div><div className="evidence-facts"><div><span>50-topic MAP</span><strong>{aggregateBefore.map.toFixed(4)} <ArrowRightIcon className="size-4" /> {activeTask.metrics.map.toFixed(4)}</strong><small>BM25 + feedback → JEV {taskInfo[task].label.toLowerCase()}</small></div><div><span>Added reranking time</span><strong>{activeTask.rerankSeconds.toFixed(1)} s</strong><small>One uncached client run</small></div><div><span>Estimated API spend</span><strong>${activeTask.estimatedCostUsd.toFixed(3)}</strong><small>Successful responses; not an invoice</small></div></div><div className="evidence-bottom"><span>{activeTask.calls.toLocaleString()} scored {task === 'documents' ? 'articles' : 'passages'} · {activeTask.model} · {activeTask.contentPolicy}</span><a href="https://github.com/carlaiau/jev-reranking/blob/main/reranking/results/jev-comparison-20260918.md" target="_blank" rel="noreferrer">Read the experiment report <ArrowTopRightOnSquareIcon className="size-4" /></a></div></section>
+        <section className="evidence-section" aria-labelledby="evidence-title"><div className="evidence-intro"><h2 id="evidence-title">Across 50 queries</h2><p>Fixed BM25 candidates; complete-document JEV scores.</p></div><div className="evidence-facts"><div><span>MAP</span><strong>{aggregateBefore.map.toFixed(4)} <ArrowRightIcon className="size-4" /> {activeTask.metrics.map.toFixed(4)}</strong><small>BM25 → JEV</small></div><div><span>Reranking time</span><strong>{activeTask.rerankSeconds.toFixed(1)} s</strong><small>Uncached run</small></div><div><span>Estimated API cost</span><strong>${activeTask.estimatedCostUsd.toFixed(3)}</strong><small>Successful responses</small></div></div><div className="evidence-bottom"><span>{activeTask.calls.toLocaleString()} scored articles · {activeTask.model} · recorded replay</span><a href="https://github.com/carlaiau/jev-reranking/blob/main/reranking/results/jev-comparison-20260918.md" target="_blank" rel="noreferrer">Experiment report <ArrowTopRightOnSquareIcon className="size-4" /></a></div></section>
       </div>
-      <footer className="site-footer page-wrap"><span><RouteMark className="footer-mark" /> Rerank Lab</span><span>Measured WSJ/TREC evidence · local replay</span></footer>
     </main>
   )
 }

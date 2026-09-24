@@ -53,7 +53,7 @@ function passageTitle(text: string | undefined, docid: string): string {
 }
 
 function redactedWsjExcerpt(text: string | undefined, sentTokens: number): string {
-  const marker = `[REDACTED_TOKENS · ${sentTokens} BERT source tokens sent]`
+  const marker = `[REDACTED_TOKENS ${sentTokens} BERT source tokens sent]`
   if (!text) return marker
   const words = text.trim().split(/\s+/)
   if (words.length <= 24) return marker

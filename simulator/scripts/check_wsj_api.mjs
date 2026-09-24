@@ -54,7 +54,7 @@ for (const [qid, query] of Object.entries(evidence.queries)) {
       for (const [index, call] of data.calls.entries()) {
         const record = saved[index]
         const count = task === 'documents' ? record.document_tokens : record.token_end - record.token_start
-        const marker = `[REDACTED_TOKENS · ${count} BERT source tokens sent]`
+        const marker = `[REDACTED_TOKENS ${count} BERT source tokens sent]`
         assert.equal(call.redacted, true)
         assert(call.payload.endsWith(marker), `Missing recorded token count for ${qid}/${task}/${docid}`)
         assert(call.payload.slice(0, -marker.length).trim().length <= 100, `Excerpt too long for ${qid}/${task}/${docid}`)
