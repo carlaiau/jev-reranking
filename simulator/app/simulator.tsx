@@ -9,7 +9,6 @@ import {
   CheckIcon,
   ChevronDownIcon,
   ChevronUpIcon,
-  CommandLineIcon,
   DocumentTextIcon,
   InformationCircleIcon,
   PlayIcon,
@@ -98,7 +97,6 @@ export function Simulator({ initial, options, taskInfo, source, aggregate }: {
   const [phase, setPhase] = useState<Phase>('before')
   const [showJudgments, setShowJudgments] = useState(true)
   const [openId, setOpenId] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'article' | 'call'>('article')
   const [documentData, setDocumentData] = useState<Record<string, DocumentPayload>>({})
   const [documentError, setDocumentError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -185,7 +183,6 @@ export function Simulator({ initial, options, taskInfo, source, aggregate }: {
   function toggleResult(docid: string) {
     if (openId === docid) { setOpenId(null); return }
     setOpenId(docid)
-    setActiveTab('article')
     setDocumentError(null)
     const key = `${qid}:${task}:${docid}`
     if (documentData[key]) return
@@ -217,13 +214,13 @@ export function Simulator({ initial, options, taskInfo, source, aggregate }: {
 
         <section className="control-room" aria-label="Choose a WSJ search query">
           <div className="control-group query-control"><label className="control-label" htmlFor="query-select">Search query</label><Select id="query-select" value={qid} onChange={event => changeQuery(event.target.value)}>
-            {options.map(option => <option key={option.id} value={option.id}>{option.id} · {option.text}</option>)}
+            {options.map(option => <option key={option.id} value={option.id}>{option.text}</option>)}
           </Select></div>
           <p className="control-context" aria-live="polite">{isLoading ? 'Searching BM25…' : loadError ? 'Search unavailable' : phase === 'scoring' ? 'JEV reranking…' : phase === 'after' ? 'JEV order' : 'BM25 order'}</p>
         </section>
 
         <section className="metrics-section" aria-labelledby="metric-title">
-          <div className="section-heading"><div><h2 id="metric-title">Ranking quality · top 100</h2><p>Query {qid}: <strong>{current ? payload.text : 'Loading…'}</strong></p></div></div>
+          <div className="section-heading"><h2 id="metric-title">Ranking quality · top 100</h2></div>
           <div className="metric-board">
             <div className="metric-header"><span>Metric</span><span>BM25</span><span>JEV</span></div>
             {metricLabels.map(({ key, label, help }) => {
@@ -263,12 +260,12 @@ export function Simulator({ initial, options, taskInfo, source, aggregate }: {
                 const details = documentData[key]
                 const movement = doc.originalRank - doc.finalRank
                 return <motion.li key={docid} layout="position" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -14 }} transition={{ layout: { type: 'spring', stiffness: 340, damping: 34 }, opacity: { duration: 0.2 } }} className={`result-row ${isOpen ? 'result-open' : ''}`}>
-                  <div className="result-main">
+                  <div className="result-main" role="button" tabIndex={0} aria-expanded={isOpen} aria-label={`${doc.title}. ${isOpen ? 'Hide' : 'Show'} JEV call`} onClick={() => toggleResult(docid)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleResult(docid) } }}>
                     <div className="rank-cell"><span className="rank-number">{String(index + 1).padStart(2, '0')}</span></div>
-                    <div className="result-copy"><div className="result-eyeline"><span className="doc-id">{docid}</span>{showJudgments && <Judgment value={doc.judgment} />}</div><button type="button" className="result-title" aria-expanded={isOpen} onClick={() => toggleResult(docid)}>{doc.title}<span className="result-open-icon">{isOpen ? <ChevronUpIcon className="size-4" /> : <ChevronDownIcon className="size-4" />}</span></button>{phase === 'after' && <div className="result-subline"><span className={movement > 0 ? 'moved-up' : movement < 0 ? 'moved-down' : ''}>{movement > 0 ? `↑ ${movement} from BM25` : movement < 0 ? `↓ ${Math.abs(movement)} from BM25` : 'Same rank'}</span></div>}</div>
+                    <div className="result-copy"><div className="result-eyeline"><span className="doc-id">{docid}</span>{showJudgments && <Judgment value={doc.judgment} />}</div><div className="result-title">{doc.title}<span className="result-open-icon">{isOpen ? <ChevronUpIcon className="size-4" /> : <ChevronDownIcon className="size-4" />}</span></div>{phase === 'after' && <div className="result-subline"><span className={movement > 0 ? 'moved-up' : movement < 0 ? 'moved-down' : ''}>{movement > 0 ? `↑ ${movement} from BM25` : movement < 0 ? `↓ ${Math.abs(movement)} from BM25` : 'Same rank'}</span></div>}</div>
                     <div className="result-score">{phase !== 'before' && doc.score !== null ? <motion.div initial={{ opacity: 0, y: 7 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: phase === 'scoring' && !reduced ? Math.min(index * 0.13, 1.2) : 0 }}><small>JEV</small><strong><AnimatedNumber value={doc.score} places={2} animateIn /></strong></motion.div> : <span className="score-pending">—</span>}</div>
                   </div>
-                  <AnimatePresence initial={false}>{isOpen && <motion.div className="result-details" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: reduced ? 0 : 0.28, ease: [0.16, 1, 0.3, 1] }}><div className="details-inner"><div className="details-tabs" role="tablist" aria-label={`Inspect ${docid}`}><button type="button" role="tab" aria-selected={activeTab === 'article'} onClick={() => setActiveTab('article')}><DocumentTextIcon className="size-4" /> Article</button><button type="button" role="tab" aria-selected={activeTab === 'call'} onClick={() => setActiveTab('call')}><CommandLineIcon className="size-4" /> JEV call</button></div>{documentError ? <div className="inline-error">{documentError}</div> : !details ? <div className="details-loading">Loading the saved result…</div> : activeTab === 'article' ? <div className="article-pane"><div className="pane-head"><strong>{details.title}</strong><span>Full text withheld</span></div><p>WSJ text is withheld. The JEV call shows a short, redacted excerpt.</p></div> : <CallPane details={details} task={task} query={payload.text} question={activeTask.question} />}</div></motion.div>}</AnimatePresence>
+                  <AnimatePresence initial={false}>{isOpen && <motion.div className="result-details" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: reduced ? 0 : 0.28, ease: [0.16, 1, 0.3, 1] }}><div className="details-inner">{documentError ? <div className="inline-error">{documentError}</div> : !details ? <div className="details-loading">Loading the saved result…</div> : <CallPane details={details} task={task} query={payload.text} question={activeTask.question} />}</div></motion.div>}</AnimatePresence>
                 </motion.li>
               })}
             </AnimatePresence>
