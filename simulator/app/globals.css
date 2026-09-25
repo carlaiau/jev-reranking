@@ -65,6 +65,9 @@ button, a, select { -webkit-tap-highlight-color: transparent; }
 .theme-toggle { display: grid; flex: 0 0 auto; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); }
 .theme-toggle:hover { background: var(--surface-soft); color: var(--text); }
 .theme-toggle svg { width: 18px; height: 18px; }
+.github-link { display: grid; flex: 0 0 auto; place-items: center; width: 40px; height: 40px; border-radius: 8px; color: var(--muted); }
+.github-link:hover { background: var(--surface-soft); color: var(--text); }
+.github-link svg { width: 19px; height: 19px; }
 
 .hero { padding: 64px 0 34px; }
 .hero-copy h1 { max-width: 850px; margin: 0; font-size: clamp(2.7rem, 5vw, 4.25rem); font-weight: 650; line-height: 1.08; letter-spacing: -.035em; text-wrap: balance; }
@@ -204,7 +207,7 @@ button, a, select { -webkit-tap-highlight-color: transparent; }
   .brand { font-size: .9rem; }
   .brand-mark { width: 23px; }
   .dataset-nav a { padding: 7px 8px; font-size: .72rem; }
-  .theme-toggle { width: 36px; height: 36px; }
+  .theme-toggle, .github-link { width: 36px; height: 36px; }
   .hero { padding: 46px 0 24px; }
   .hero-copy h1 { font-size: clamp(2.25rem, 8vw, 3.4rem); }
   .hero-copy p { margin-top: 13px; font-size: .95rem; }
@@ -252,7 +255,7 @@ button, a, select { -webkit-tap-highlight-color: transparent; }
   .evidence-facts > div:first-child { grid-column: 1 / -1; }
 }
 
-@media (max-width: 350px) {
+@media (max-width: 385px) {
   .brand span { display: none; }
 }
 
