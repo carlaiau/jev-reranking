@@ -234,7 +234,7 @@ export function Simulator({ initial, options, taskInfo, source, aggregate }: {
         </section>
 
         <section className="control-room" aria-label="Choose a WSJ search query">
-          <div className="control-group query-control"><label className="control-label" htmlFor="query-select">Search query</label><Select id="query-select" value={qid} onChange={event => changeQuery(event.target.value)}>
+          <div className="control-group query-control"><label className="control-label" htmlFor="query-select">Sample of 20 search queries</label><Select id="query-select" value={qid} onChange={event => changeQuery(event.target.value)}>
             {options.map(option => <option key={option.id} value={option.id}>{option.text}</option>)}
           </Select></div>
           <p className="control-context" aria-live="polite">{isLoading ? 'Searching BM25…' : loadError ? 'Search unavailable' : phase === 'scoring' ? 'JEV reranking…' : phase === 'after' ? 'JEV order' : 'BM25 order'}</p>
