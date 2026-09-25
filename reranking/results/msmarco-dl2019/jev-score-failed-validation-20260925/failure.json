@@ -1,0 +1,60 @@
+{
+  "all_response_tokens": {
+    "input_tokens": 11211,
+    "output_tokens": 361
+  },
+  "api_attempts": 21,
+  "binary_relevance_threshold": 2,
+  "branch": "codex/search-msmarco-jev-score",
+  "cache_hits": 0,
+  "candidate_pairs": 41042,
+  "commit": "55d61ac136cec2ff8a6c0f7d3d56395b48089178",
+  "compute_cost_usd": null,
+  "counters": {
+    "covered_document_tokens_across_query_pairs": 0,
+    "document_tokens_across_query_pairs": 0,
+    "hosted_inference_api_calls": 0,
+    "inference_seconds": 0.0,
+    "input_tokens": 0,
+    "model_forward_calls": 0,
+    "model_forward_calls_attempted": 0,
+    "padded_input_tokens": 0,
+    "passage_scoring_calls": 0,
+    "passage_scoring_calls_attempted": 0,
+    "query_document_pairs": 0,
+    "unique_document_tokens": 0
+  },
+  "dataset": "msmarco-v1-trec-dl2019-passages",
+  "dirty": false,
+  "end_to_end_search_seconds": null,
+  "error_type": "ValueError",
+  "estimated_new_api_cost_usd": 0.000470862,
+  "estimated_uncached_api_cost_usd": 0.000470862,
+  "failed_api_attempts": 2,
+  "input_identity_sha256": "e51a08b5d5692f8d97325320a9f3b2ef599a249293946fedf3681dcdaf49ad2b",
+  "input_manifest_sha256": "ed1cbc25ead23107c25fcd5ef1a5d00bd3ea5904cc63ac7ee0ed8608d2b4b169",
+  "method": "jev-score",
+  "new_response_tokens": {
+    "input_tokens": 11211,
+    "output_tokens": 361
+  },
+  "new_scoring_calls": 19,
+  "platform": "macOS-26.4-arm64-arm-64bit-Mach-O",
+  "processor": "arm",
+  "queries": 43,
+  "retrieval_seconds": null,
+  "source_sha256": {
+    "reranking/jev.py": "f6f80b2764a38e8d7c58023cfcc9b912f76e797a993e1612d13967029c91310a",
+    "reranking/jev_compare.py": "ba6745e805cecff82db8d118e2da37d3377b33ae59a5a9a8ae3afc83a4e44cb3",
+    "reranking/monobert.py": "526cbfe17c6565b5787fcd1992021cce0aaba1bc1e01c909129dcb17d925f4c2",
+    "reranking/msmarco.py": "bfe515eb092fa70954e87a1264b1c86d73da135f0b854aa1c9de2b57c5b24b96",
+    "reranking/run.py": "ac3ee45c0e28e1c5ce78298e67eee61936be6a745e5e27637548173dcaa2b2ec",
+    "tools/stage_artifacts.py": "4f68d63e7f294026367e824d5628619b54e8f7be33d7e8141ef18444a0d3bf8b"
+  },
+  "started_at_utc": "2026-09-25T01:30:34.706550+00:00",
+  "status": "failed",
+  "tie_break": "ascending numeric passage ID",
+  "timing_scope": "rerank includes model/tokenizer setup, preparation, inference and run/evidence output; excludes input verification and evaluation; per-query times exclude shared setup; downloads precompleted",
+  "top_k": 1000,
+  "wall_seconds": 8.370107833005022
+}

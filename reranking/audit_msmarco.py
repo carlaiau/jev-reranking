@@ -224,8 +224,10 @@ def audit_jev(directory, mono, source, runs, queries, docs, tokenizer):
             detail = row['answer_details']
             probabilities = detail['probabilities']
             if (len(probabilities) != 10 or any(not math.isfinite(p) or not 0 <= p <= 1 for p in probabilities) or
-                abs(sum(probabilities)-1) > .02 or
-                abs(sum(i*p for i,p in enumerate(probabilities))-detail['native_score']) > .05 or
+                abs(sum(probabilities)-1) > .055 or
+                abs(sum(i*p for i,p in enumerate(probabilities))-detail['native_score']) > .25 or
+                abs(sum(probabilities)-detail['probability_sum']) > 1e-9 or
+                abs(sum(i*p for i,p in enumerate(probabilities))-detail['calculated_index']) > 1e-9 or
                 not 0 <= detail['confidence'] <= 1 or
                 abs(sum(p*w for p,w in zip(probabilities,SCORE_WEIGHTS))-row['score']) > 1e-9):
                 raise ValueError('Score probabilities/weighted value mismatch')
@@ -264,7 +266,8 @@ def main():
     runs, queries, docs, _ = verified_inputs(args.data, source)
     from transformers import BertTokenizerFast
     tokenizer = BertTokenizerFast.from_pretrained(MODEL, revision=REVISION, cache_dir=ROOT/'.cache/monobert-model', local_files_only=True)
-    print(audit_mono(mono, source, runs, queries, docs, tokenizer), flush=True)
+    if not args.score_only:
+        print(audit_mono(mono, source, runs, queries, docs, tokenizer), flush=True)
     if args.mono_only:
         return
     if args.score_only:

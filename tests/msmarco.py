@@ -178,6 +178,11 @@ class Tests(unittest.TestCase):
                                                             'probabilities': {**probs, '9': -0.1}}}}
             with self.assertRaises(ValueError):
                 score_relevance(corrupt)
+            rounded = {**response, 'answers': {'relevant': {**response['answers']['relevant'],
+                        'probabilities': {0: .04, 1: .57, 2: .14, 3: .03, 4: .12, 5: .09,
+                                          6: 0, 7: 0, 8: 0, 9: 0}, 'score': 1.95}}}
+            self.assertAlmostEqual(score_answer_details(rounded)['probability_sum'], .99)
+            self.assertAlmostEqual(score_relevance(rounded), 23.65)
 
 
 if __name__ == '__main__':

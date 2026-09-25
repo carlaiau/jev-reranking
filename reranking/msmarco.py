@@ -59,16 +59,21 @@ def score_answer_details(response):
         if isinstance(p, bool) or not isinstance(p, (int, float)) or not math.isfinite(p) or not 0 <= p <= 1:
             raise ValueError('invalid Score probability')
         values.append(p)
-    if abs(sum(values) - 1) > .02:
+    # The API currently reports probabilities to two decimals. Ten rounded
+    # values can differ from one by as much as .05.
+    if abs(sum(values) - 1) > .055:
         raise ValueError('Score probabilities do not sum to one')
     position = answer.get('score')
     confidence = answer.get('confidence')
     if any(isinstance(x, bool) or not isinstance(x, (int, float)) or not math.isfinite(x)
            for x in (position, confidence)) or not 0 <= position <= 9 or not 0 <= confidence <= 1:
         raise ValueError('invalid Score position or confidence')
-    if abs(position - sum(i * p for i, p in enumerate(values))) > .05:
+    # Rounding across ten levels can move the reported native mean by .225.
+    calculated_position = sum(i * p for i, p in enumerate(values))
+    if abs(position - calculated_position) > .25:
         raise ValueError('Score position disagrees with probabilities')
-    return {'probabilities': values, 'native_score': position, 'confidence': confidence}
+    return {'probabilities': values, 'native_score': position, 'confidence': confidence,
+            'probability_sum': sum(values), 'calculated_index': calculated_position}
 
 
 def score_relevance(response):

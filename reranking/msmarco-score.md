@@ -32,7 +32,11 @@ query. Its ten ordered criteria and fixed relevance weights are:
 The exact instructions and criterion strings are frozen in `SCORE_QUESTION` in
 `msmarco.py`. The ranking value is `sum(p[i] * weight[i])` from the ten returned
 probabilities. The API's own `score` is the expected level index (0–9), which
-we check against the distribution. We also retain the probabilities, API score,
+we check against the distribution. Live responses round probabilities to two
+decimals, so the allowed probability-sum deviation is 0.055 and the
+native-index deviation is 0.25 (the ten half-cent rounding errors can move the
+index mean by at most 0.225). The experimental relevance formula still uses the
+returned probabilities directly. We retain the probabilities, API score,
 and confidence for each pair. The weights are fixed before evaluation; neither
 their spacing nor the rubric is tuned on these 43 queries. [TypeSafe's Score
 documentation](https://docs.typesafe.ai/primitives/score) defines the response.
