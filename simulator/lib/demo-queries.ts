@@ -1,10 +1,14 @@
 const QUERY_COUNT = 20
+const queryCollator = new Intl.Collator('en', { sensitivity: 'base', numeric: true })
 
-export function selectDemoQueries<T extends { id: string }>(options: T[], defaultId: string): T[] {
+export function selectDemoQueries<T extends { id: string; text: string }>(options: T[], defaultId: string): T[] {
   const ordered = [...options].sort((a, b) => Number(a.id) - Number(b.id))
   const defaultIndex = ordered.findIndex(option => option.id === defaultId)
   if (defaultIndex < 0) throw new Error(`Default query ${defaultId} is missing`)
-  if (ordered.length <= QUERY_COUNT) return ordered
+  const alphabetize = (sample: T[]) => sample.sort((a, b) =>
+    queryCollator.compare(a.text, b.text) || Number(a.id) - Number(b.id),
+  )
+  if (ordered.length <= QUERY_COUNT) return alphabetize(ordered)
 
   // Spread examples across query IDs without selecting on reranking outcomes.
   const indices = Array.from({ length: QUERY_COUNT }, (_, index) =>
@@ -16,5 +20,5 @@ export function selectDemoQueries<T extends { id: string }>(options: T[], defaul
     )
     indices[indices.indexOf(nearest)] = defaultIndex
   }
-  return indices.sort((a, b) => a - b).map(index => ordered[index])
+  return alphabetize(indices.map(index => ordered[index]))
 }

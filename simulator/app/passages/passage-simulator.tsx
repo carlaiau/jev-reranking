@@ -166,7 +166,7 @@ export function PassageSimulator({ initial, options, taskInfo, referenceMetrics 
       </section>
 
       <section className="control-room" aria-label="Choose an MS MARCO query">
-        <div className="control-group query-control"><label className="control-label" htmlFor="passage-query">Search query</label><Select id="passage-query" value={qid} onChange={event => changeQuery(event.target.value)}>{options.map(option => <option key={option.id} value={option.id}>{option.text}</option>)}</Select></div>
+        <div className="control-group query-control"><label className="control-label" htmlFor="passage-query">Sample of 20 search queries</label><Select id="passage-query" value={qid} onChange={event => changeQuery(event.target.value)}>{options.map(option => <option key={option.id} value={option.id}>{option.text}</option>)}</Select></div>
         <p className="control-context" aria-live="polite">{isLoading ? 'Loading monoBERT results…' : loadError ? 'Results unavailable' : phase === 'scoring' ? 'JEV reranking…' : phase === 'after' ? 'JEV order' : 'monoBERT order'}</p>
       </section>
 
