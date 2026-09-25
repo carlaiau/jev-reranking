@@ -3,7 +3,7 @@
 Can JEV's zero-shot general “intelligence” match established specialist rerankers? We compare ranking quality, time and cost on fixed candidates, using
 MS MARCO passage and document benchmarks, with TREC-1 WSJ as a transfer test.
 
-The [interactive reranking simulator](simulator/README.md) replays the fixed WSJ lexical ranking and completed JEV scores, with a separate MS MARCO passage comparison. Collection text stays outside Git.
+The [interactive reranking simulator](simulator/README.md) replays the fixed WSJ lexical ranking and completed JEV scores, with a separate MS MARCO passage comparison. It reads seeded Neon tables at runtime; WSJ article bodies stay outside both Git and the simulator database.
 
 In the web app's WSJ view, each saved BM25 search has 1,000 results, but JEV
 reranks only positions 1–100; positions 101–1,000 keep their BM25 order. The

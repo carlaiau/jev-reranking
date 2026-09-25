@@ -1,5 +1,3 @@
-import evidenceFile from '../data/evidence.json'
-
 export type TaskId = 'documents' | 'passages'
 export type MetricKey = 'map' | 'P_10' | 'Rprec' | 'bpref' | 'recip_rank'
 export type Metrics = Record<MetricKey, number>
@@ -65,7 +63,6 @@ export type Evidence = {
   queries: Record<string, QueryEvidence>
 }
 
-export const evidence = evidenceFile as Evidence
 export const taskIds: TaskId[] = ['documents', 'passages']
 export const metricKeys: MetricKey[] = ['map', 'P_10', 'Rprec', 'bpref', 'recip_rank']
 

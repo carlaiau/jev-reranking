@@ -1,4 +1,3 @@
-import evidenceFile from '../data/msmarco-evidence.json'
 import type { ScoreRecord } from './evidence'
 
 export type PassageTaskId = 'matched' | 'original'
@@ -34,7 +33,6 @@ export type PassageEvidence = {
   }>
 }
 
-export const passageEvidence = evidenceFile as PassageEvidence
 export function isPassageTask(value: string | null): value is PassageTaskId {
   return value === 'matched' || value === 'original'
 }

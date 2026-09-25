@@ -20,7 +20,7 @@ import type { Evidence, ScoreRecord, TaskId } from '@/lib/evidence'
 import type { getQueryPayload } from '@/lib/server-data'
 import type { WsjMetricKey, WsjMetrics } from '@/lib/wsj-top100'
 
-type QueryPayload = NonNullable<ReturnType<typeof getQueryPayload>>
+type QueryPayload = NonNullable<Awaited<ReturnType<typeof getQueryPayload>>>
 type Option = { id: string; text: string }
 type Phase = 'before' | 'scoring' | 'after'
 const AUTO_REPLAY_DELAY_MS = 2200
@@ -269,7 +269,7 @@ export function Simulator({ initial, options, taskInfo, source, aggregate }: {
           {isLoading && <div className="replay-progress" role="status" aria-label="Replaying the saved BM25 search"><span className="search-progress-fill" /></div>}
           {phase === 'scoring' && <div className="replay-progress" role="status"><span className="replay-progress-fill" /><span className="sr-only">Playing back recorded JEV scores before reordering.</span></div>}
           {loadError && <div className="inline-error">{loadError} <button type="button" onClick={() => changeQuery(source.defaultQuery)}>Return to the default query</button></div>}
-          {!payload.contentAvailable && <div className="content-alert"><DocumentTextIcon className="size-5" /><span>Article names and redacted input excerpts are not installed on this server. Rankings and measured scores still replay.</span></div>}
+          {!payload.contentAvailable && <div className="content-alert"><DocumentTextIcon className="size-5" /><span>Some article names are missing from the imported collection.</span></div>}
           {!current ? <div className="ranking-loading" style={loadingHeight ? { minHeight: loadingHeight } : undefined}>{loadError ? 'Search unavailable.' : 'Replaying saved BM25 search…'}</div> : <ol className="result-list" ref={resultList}>
             <AnimatePresence initial={false} mode="popLayout">
               {visible.map((docid, index) => {
@@ -312,7 +312,7 @@ export function CallPane({ details, task, query, question, stateField = 'candida
   const record = sorted[Math.min(selected, sorted.length - 1)]
   const call = {
     model: 'jev-latest',
-    state: { query, [stateField]: record.payload ?? '[locally provisioned passage text required]' },
+    state: { query, [stateField]: record.payload ?? '[recorded passage text unavailable]' },
     questions: { relevant: question },
   }
   return <div className="call-pane"><div className="call-summary"><div><span>Recorded JEV answer</span><strong>{record.score.toFixed(2)}</strong><small>Relevance score · 0 to 1</small></div><div><span>Model</span><strong>{record.model}</strong><small>{record.inputTokens.toLocaleString()} total API input · {record.outputTokens} output tokens</small></div><div><span>Call time</span><strong>{record.seconds.toFixed(2)} s</strong><small>{record.cacheHit ? 'Cache replay' : 'Uncached response'}</small></div></div>{task === 'passages' && <div className="passage-chooser"><label htmlFor={`passage-${details.docid}`}>Scored passage</label><select id={`passage-${details.docid}`} value={selected} onChange={event => setSelected(Number(event.target.value))}>{sorted.map((item, index) => <option key={item.passage_index} value={index}>Window {item.passage_index! + 1} · score {item.score.toFixed(2)}{index === 0 ? ' · MaxP winner' : ''}</option>)}</select><p>Each saved window received its own call. The highest passage score is the article score used for ranking.</p></div>}<div className="code-head"><span>{record.redacted ? 'REQUEST SHAPE · REDACTED INPUT' : 'REQUEST SHAPE · RECORDED INPUT'}</span><span>{record.redacted ? 'Recorded length; body redacted' : record.payload ? 'Payload hash verified' : 'Payload text unavailable'}</span></div><pre className="call-code"><code>{JSON.stringify(call, null, 2)}</code></pre>{record.redacted && <p className="call-redaction-note">The marker counts BERT source tokens sent as the article or passage. Total API input tokens above also include the query and question.</p>}<div className="code-head response-head"><span>RECORDED RESULT</span><span>Source: scores.jsonl</span></div><pre className="call-code response-code"><code>{JSON.stringify({ score: record.score, model: record.model, usage: { input_tokens: record.inputTokens, output_tokens: record.outputTokens } }, null, 2)}</code></pre></div>

@@ -7,13 +7,15 @@
     "build": "next build --webpack",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "evidence": "python3 scripts/build_evidence.py"
+    "evidence": "python3 scripts/build_evidence.py",
+    "db:seed": "node scripts/seed_neon.mjs"
   },
   "dependencies": {
     "@floating-ui/react": "0.26.28",
     "@fontsource-variable/space-grotesk": "5.2.8",
     "@headlessui/react": "2.2.10",
     "@heroicons/react": "2.2.0",
+    "@neondatabase/serverless": "^1.1.0",
     "clsx": "2.1.1",
     "motion": "13.2.0",
     "next": "16.3.4",
