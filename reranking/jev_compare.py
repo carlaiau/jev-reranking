@@ -87,6 +87,7 @@ class Service:
 
     def score(self, task, query):
         start = time.perf_counter()
+        validator = getattr(self.args, 'response_validator', validate_response)
         identity = {k: v for k, v in task.items() if k != 'text'}
         payload = {'model': self.args.model,
                    'state': {'query': query, getattr(self.args, 'state_field', 'candidate_article'): task['text']},
@@ -105,7 +106,7 @@ class Service:
                 try:
                     import msgspec
                     response = msgspec.to_builtins(self.client.system_one(**payload))
-                    validate_response(response)
+                    validator(response)
                 except Exception as error:
                     status = getattr(error, 'status', getattr(error, 'status_code', None))
                     event.update(status='failed', error_type=type(error).__name__, http_status=status, seconds=time.perf_counter()-call_start)
@@ -120,12 +121,15 @@ class Service:
                     self.journal('attempts.jsonl', event, self.attempts)
                     atomic_write(path, json.dumps(response, sort_keys=True) + '\n')
                     break
-        score = validate_response(response)
+        score = validator(response)
         if self.args.expected_model and response['model'] != self.args.expected_model:
             raise ValueError('served model changed')
         row = {**identity, 'payload_text_sha256': digest(task['text']), 'payload_characters': len(task['text']), 'cache_key': key,
                'score': score, 'cache_hit': hit, 'seconds': time.perf_counter()-start,
                'response': {'model': response['model'], 'usage': response.get('usage', {})}}
+        details = getattr(self.args, 'answer_details', None)
+        if details is not None:
+            row['answer_details'] = details(response)
         self.journal('scores.jsonl', row, self.rows)
         return row
 

@@ -7,7 +7,8 @@ import json
 import math
 from pathlib import Path
 
-from msmarco import METRICS, QUESTION, evaluation, save, validate_scores, verified_inputs
+from msmarco import (METRICS, QUESTION, SCORE_QUESTION, SCORE_WEIGHTS, evaluation,
+                     save, validate_scores, verified_inputs)
 from monobert import MODEL, REVISION, coverage, render, windows
 from jev import digest
 from jev_compare import prepare
@@ -195,8 +196,11 @@ def audit_mono(directory, source, runs, queries, docs, tokenizer):
 
 def audit_jev(directory, mono, source, runs, queries, docs, tokenizer):
     metadata = json.loads((directory/'manifest.json').read_text())
+    is_score = metadata['method'] == 'jev-score'
+    question = SCORE_QUESTION if is_score else QUESTION
     if (metadata['status'] != 'complete' or metadata['input_manifest_sha256'] != sha(source/'manifest.json') or
-        metadata['monobert_manifest_sha256'] != sha(mono/'manifest.json') or metadata['question'] != QUESTION):
+        metadata['monobert_manifest_sha256'] != sha(mono/'manifest.json') or metadata['question'] != question or
+        (is_score and tuple(metadata['score_weights']) != SCORE_WEIGHTS)):
         raise ValueError('JEV reference/prompt mismatch')
     mode = 'passages' if metadata['method'] == 'jev-matched' else 'documents'
     tasks = prepare(mode, runs, queries, docs, mono, tokenizer)
@@ -214,8 +218,19 @@ def audit_jev(directory, mono, source, runs, queries, docs, tokenizer):
                 raise ValueError('JEV boundary/identity mismatch')
         if row['payload_text_sha256'] != digest(task['text']) or row['payload_characters'] != len(task['text']):
             raise ValueError('JEV text mismatch')
-        if row['response']['model'] != 'jev-1.13.0' or not math.isfinite(row['score']) or not 0 <= row['score'] <= 1:
+        if row['response']['model'] != 'jev-1.13.0' or not math.isfinite(row['score']):
             raise ValueError('JEV model/score mismatch')
+        if is_score:
+            detail = row['answer_details']
+            probabilities = detail['probabilities']
+            if (len(probabilities) != 10 or any(not math.isfinite(p) or not 0 <= p <= 1 for p in probabilities) or
+                abs(sum(probabilities)-1) > .02 or
+                abs(sum(i*p for i,p in enumerate(probabilities))-detail['native_score']) > .05 or
+                not 0 <= detail['confidence'] <= 1 or
+                abs(sum(p*w for p,w in zip(probabilities,SCORE_WEIGHTS))-row['score']) > 1e-9):
+                raise ValueError('Score probabilities/weighted value mismatch')
+        elif not 0 <= row['score'] <= 1:
+            raise ValueError('invalid Noul relevance score')
         pair = row['qid'], row['docid']
         scores[pair] = max(scores.get(pair, -math.inf), row['score'])
     validate_scores(runs, scores)
@@ -243,6 +258,7 @@ def main():
     p.add_argument('--root', type=Path, default=ROOT/'reranking/results/msmarco-dl2019')
     p.add_argument('--data', type=Path, default=ROOT/'.cache/msmarco-dl2019')
     p.add_argument('--mono-only', action='store_true')
+    p.add_argument('--score-only', action='store_true')
     args = p.parse_args()
     source, mono = args.root/'input', args.root/'monobert'
     runs, queries, docs, _ = verified_inputs(args.data, source)
@@ -250,6 +266,12 @@ def main():
     tokenizer = BertTokenizerFast.from_pretrained(MODEL, revision=REVISION, cache_dir=ROOT/'.cache/monobert-model', local_files_only=True)
     print(audit_mono(mono, source, runs, queries, docs, tokenizer), flush=True)
     if args.mono_only:
+        return
+    if args.score_only:
+        directory = args.root/'jev-score'
+        print(audit_jev(directory, mono, source, runs, queries, docs, tokenizer), flush=True)
+        if evaluation(source, directory) != json.loads((directory/'manifest.json').read_text())['metrics']:
+            raise ValueError('Score evaluation mismatch')
         return
     reference = json.loads((mono/'metrics-per-query.json').read_text())
     comparisons = {}

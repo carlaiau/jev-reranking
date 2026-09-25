@@ -9,8 +9,9 @@ import unittest
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'reranking'))
-from msmarco import (QUESTION, evaluation, execute, freeze, read_inputs, validate_scores,
-                     verified_inputs)
+from msmarco import (QUESTION, SCORE_QUESTION, SCORE_WEIGHTS, evaluation, execute,
+                     freeze, read_inputs, score_answer_details, score_relevance,
+                     validate_scores, verified_inputs)
 from jev_compare import Service
 from audit_msmarco import audit_mono, holm, statistics
 
@@ -142,6 +143,41 @@ class Tests(unittest.TestCase):
             args.question = {**QUESTION, 'instructions': 'changed'}
             self.assertFalse(service.score(task, 'query')['cache_hit'])
             self.assertNotIn('private example', (root/'scores.jsonl').read_text())
+
+    def test_score_probabilities_weighting_and_cached_replay(self):
+        probs = {str(i): 0.0 for i in range(10)}
+        probs['1'], probs['9'] = .25, .75
+        response = {'model': 'test', 'answers': {'relevant': {
+            'type': 'score', 'probabilities': probs, 'score': 7.0, 'confidence': .4}},
+            'usage': {'input_tokens': 20, 'output_tokens': 2}}
+        self.assertEqual(score_relevance(response), .25*SCORE_WEIGHTS[1]+.75*SCORE_WEIGHTS[9])
+        self.assertEqual(score_answer_details(response)['probabilities'][9], .75)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            class Client:
+                def __init__(self): self.calls = 0
+                def system_one(self, **kwargs):
+                    self.calls += 1
+                    self.payload = kwargs
+                    return response
+                def close(self): pass
+            client = Client()
+            args = SimpleNamespace(cache=root/'cache', cache_only=False, model='test', mode='documents',
+                                   expected_model='test', max_attempts=1, question=SCORE_QUESTION,
+                                   state_field='candidate_passage', response_validator=score_relevance,
+                                   answer_details=score_answer_details)
+            service = Service(args, root, client)
+            task = {'qid': '1', 'docid': '10', 'text': 'example passage'}
+            row = service.score(task, 'example query')
+            self.assertEqual(row['score'], 78.75)
+            self.assertEqual(row['answer_details']['probabilities'][9], .75)
+            self.assertEqual(client.payload['questions']['relevant'], SCORE_QUESTION)
+            self.assertTrue(service.score(task, 'example query')['cache_hit'])
+            self.assertEqual(client.calls, 1)
+            corrupt = {**response, 'answers': {'relevant': {**response['answers']['relevant'],
+                                                            'probabilities': {**probs, '9': -0.1}}}}
+            with self.assertRaises(ValueError):
+                score_relevance(corrupt)
 
 
 if __name__ == '__main__':
