@@ -3,7 +3,7 @@ import '@fontsource-variable/space-grotesk/wght.css'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Rerank Lab — BM25 to JEV',
+  title: 'JEV reranking',
   description: 'An interactive replay of measured JEV reranking on a fixed WSJ BM25 candidate set.',
 }
 

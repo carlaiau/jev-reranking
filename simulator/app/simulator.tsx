@@ -81,9 +81,9 @@ export function RelativeChange({ before, after }: { before: number; after: numbe
 
 export function RouteMark({ className = '' }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 46 46" fill="none" aria-hidden="true">
-      <path d="M5 10h16c8 0 8 10 16 10h4M5 23h36M5 36h16c8 0 8-10 16-10h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <circle cx="6" cy="10" r="3" fill="currentColor" /><circle cx="40" cy="23" r="3" fill="currentColor" /><circle cx="6" cy="36" r="3" fill="currentColor" />
+    <svg className={className} viewBox="0 0 48 48" fill="none" aria-hidden="true">
+      <rect width="48" height="48" rx="11" fill="currentColor" />
+      <path d="M10 15h9c8 0 8 18 16 18h3M10 33h9c8 0 8-18 16-18h3" stroke="var(--ground)" strokeWidth="3.5" strokeLinecap="round" />
     </svg>
   )
 }
@@ -219,7 +219,7 @@ export function Simulator({ initial, options, taskInfo, source, aggregate }: {
   return (
     <main className="site-shell">
       <header className="site-header page-wrap">
-        <div className="brand"><RouteMark className="brand-mark" /><span>Rerank Lab</span></div>
+        <div className="brand"><RouteMark className="brand-mark" /><span>JEV reranking</span></div>
         <nav className="dataset-nav" aria-label="Experiment dataset"><a href="/" aria-current="page">WSJ</a><a href="/passages">MS MARCO</a></nav>
         <ThemeToggle />
       </header>
