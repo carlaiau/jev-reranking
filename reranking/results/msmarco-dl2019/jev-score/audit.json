@@ -1,0 +1,8 @@
+{
+  "attempt_usage_cost_verified": true,
+  "candidate_pairs": 41042,
+  "payload_hashes_and_boundaries_verified": true,
+  "ranking_reconstructed": true,
+  "scoring_units": 41042,
+  "status": "passed"
+}

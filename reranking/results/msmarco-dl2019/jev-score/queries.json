@@ -1,0 +1,217 @@
+[
+  {
+    "qid": "19335",
+    "scoring_calls": 1000,
+    "seconds": 31.040717208001297
+  },
+  {
+    "qid": "47923",
+    "scoring_calls": 1000,
+    "seconds": 30.508278374996735
+  },
+  {
+    "qid": "87181",
+    "scoring_calls": 1000,
+    "seconds": 30.692344957991736
+  },
+  {
+    "qid": "87452",
+    "scoring_calls": 1000,
+    "seconds": 31.68350941600511
+  },
+  {
+    "qid": "104861",
+    "scoring_calls": 1000,
+    "seconds": 31.46782995799731
+  },
+  {
+    "qid": "130510",
+    "scoring_calls": 1000,
+    "seconds": 30.663866833012435
+  },
+  {
+    "qid": "131843",
+    "scoring_calls": 1000,
+    "seconds": 31.625170874991454
+  },
+  {
+    "qid": "146187",
+    "scoring_calls": 1000,
+    "seconds": 30.928184792006505
+  },
+  {
+    "qid": "148538",
+    "scoring_calls": 1000,
+    "seconds": 30.561657333004405
+  },
+  {
+    "qid": "156493",
+    "scoring_calls": 1000,
+    "seconds": 30.705142999999225
+  },
+  {
+    "qid": "168216",
+    "scoring_calls": 1000,
+    "seconds": 31.711086458002683
+  },
+  {
+    "qid": "182539",
+    "scoring_calls": 1000,
+    "seconds": 32.149864291000995
+  },
+  {
+    "qid": "183378",
+    "scoring_calls": 1000,
+    "seconds": 31.02446966599382
+  },
+  {
+    "qid": "207786",
+    "scoring_calls": 1000,
+    "seconds": 30.985133667010814
+  },
+  {
+    "qid": "264014",
+    "scoring_calls": 1000,
+    "seconds": 31.19441020899103
+  },
+  {
+    "qid": "359349",
+    "scoring_calls": 1000,
+    "seconds": 31.254466541999136
+  },
+  {
+    "qid": "405717",
+    "scoring_calls": 1000,
+    "seconds": 32.12172845899477
+  },
+  {
+    "qid": "443396",
+    "scoring_calls": 1000,
+    "seconds": 31.35628775000805
+  },
+  {
+    "qid": "451602",
+    "scoring_calls": 1000,
+    "seconds": 31.38440491700021
+  },
+  {
+    "qid": "489204",
+    "scoring_calls": 1000,
+    "seconds": 31.202774084013072
+  },
+  {
+    "qid": "490595",
+    "scoring_calls": 1000,
+    "seconds": 30.895196917001158
+  },
+  {
+    "qid": "527433",
+    "scoring_calls": 1000,
+    "seconds": 30.751484416992753
+  },
+  {
+    "qid": "573724",
+    "scoring_calls": 1000,
+    "seconds": 33.28443062500446
+  },
+  {
+    "qid": "833860",
+    "scoring_calls": 1000,
+    "seconds": 31.04076316699502
+  },
+  {
+    "qid": "855410",
+    "scoring_calls": 5,
+    "seconds": 0.258275333995698
+  },
+  {
+    "qid": "915593",
+    "scoring_calls": 1000,
+    "seconds": 31.607458042009966
+  },
+  {
+    "qid": "962179",
+    "scoring_calls": 1000,
+    "seconds": 31.078459416006808
+  },
+  {
+    "qid": "1037798",
+    "scoring_calls": 1000,
+    "seconds": 31.56533870799467
+  },
+  {
+    "qid": "1063750",
+    "scoring_calls": 1000,
+    "seconds": 31.77980674999708
+  },
+  {
+    "qid": "1103812",
+    "scoring_calls": 1000,
+    "seconds": 31.130469292009366
+  },
+  {
+    "qid": "1106007",
+    "scoring_calls": 1000,
+    "seconds": 31.20135395800753
+  },
+  {
+    "qid": "1110199",
+    "scoring_calls": 1000,
+    "seconds": 31.72524162499758
+  },
+  {
+    "qid": "1112341",
+    "scoring_calls": 1000,
+    "seconds": 31.800684250003542
+  },
+  {
+    "qid": "1113437",
+    "scoring_calls": 1000,
+    "seconds": 31.371239708998473
+  },
+  {
+    "qid": "1114646",
+    "scoring_calls": 1000,
+    "seconds": 31.280135749999317
+  },
+  {
+    "qid": "1114819",
+    "scoring_calls": 1000,
+    "seconds": 34.36013837499195
+  },
+  {
+    "qid": "1115776",
+    "scoring_calls": 1000,
+    "seconds": 31.799357583004166
+  },
+  {
+    "qid": "1117099",
+    "scoring_calls": 1000,
+    "seconds": 32.36811083300563
+  },
+  {
+    "qid": "1121402",
+    "scoring_calls": 1000,
+    "seconds": 31.77386679200572
+  },
+  {
+    "qid": "1121709",
+    "scoring_calls": 37,
+    "seconds": 1.3870997079939116
+  },
+  {
+    "qid": "1124210",
+    "scoring_calls": 1000,
+    "seconds": 30.938393042000826
+  },
+  {
+    "qid": "1129237",
+    "scoring_calls": 1000,
+    "seconds": 30.81487683299929
+  },
+  {
+    "qid": "1133167",
+    "scoring_calls": 1000,
+    "seconds": 30.55768820900994
+  }
+]

@@ -1,0 +1,12 @@
+Indexing toy fixture in /Users/caiau/school/ir-autoresearch/smoke-eval
+0 documents indexed
+Indexed 11 documents. Serialising...
+Running smoke topics
+Evaluating smoke run with trec_eval
+map                   	all	1.0000
+recip_rank            	all	1.0000
+P_5                   	all	0.4667
+Smoke evaluation passed
+OpenAI config checks passed
+JEV pointwise contracts passed
+JEV pipeline bypasses legacy reranking and preserves candidate input
