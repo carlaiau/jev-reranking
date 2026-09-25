@@ -3,6 +3,17 @@
 Can JEV's zero-shot general “intelligence” match established specialist rerankers? We compare ranking quality, time and cost on fixed candidates, using
 MS MARCO passage and document benchmarks, with TREC-1 WSJ as a transfer test.
 
+The [interactive reranking simulator](simulator/README.md) replays the fixed WSJ lexical ranking and completed JEV scores, with a separate MS MARCO passage comparison. It reads seeded Neon tables at runtime; WSJ article bodies stay outside both Git and the simulator database.
+
+In the web app's WSJ view, each saved BM25 search has 1,000 results, but JEV
+reranks only positions 1–100; positions 101–1,000 keep their BM25 order. The
+page displays the top 10 and evaluates WSJ metrics with a rank-100 cutoff
+(`trec_eval -c -M100`). Its nDCG@10 is 0.4640 → 0.6634 and MAP@100 is
+0.1729 → 0.2263, while the WSJ table below reports full 1,000-result MAP of
+0.2521 → 0.3055. The MS MARCO web view replays the completed experiment on all
+supplied candidates, comparing monoBERT with original-text JEV; its benchmark
+table below reports the same full-candidate scope.
+
 ## Benchmark 1: MS MARCO v1 passage reranking (TREC DL 2019)
 
 Rerank 41,042 supplied query–passage pairs across 43 judged queries, with no new
