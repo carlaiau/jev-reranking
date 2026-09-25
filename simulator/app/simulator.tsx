@@ -13,6 +13,7 @@ import {
   PlayIcon,
 } from '@heroicons/react/20/solid'
 import { Button } from '@/components/catalyst/button'
+import { GithubLink } from '@/components/github-link'
 import { MetricTooltip } from '@/components/metric-tooltip'
 import { Select } from '@/components/catalyst/select'
 import { ThemeToggle } from '@/components/theme-toggle'
@@ -222,6 +223,7 @@ export function Simulator({ initial, options, taskInfo, source, aggregate }: {
         <div className="brand"><RouteMark className="brand-mark" /><span>JEV reranking</span></div>
         <nav className="dataset-nav" aria-label="Experiment dataset"><a href="/" aria-current="page">WSJ</a><a href="/passages">MS MARCO</a></nav>
         <ThemeToggle />
+        <GithubLink />
       </header>
 
       <div className="page-wrap">

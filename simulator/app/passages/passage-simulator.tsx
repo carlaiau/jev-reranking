@@ -7,6 +7,7 @@ import { Button } from '@/components/catalyst/button'
 import { MetricTooltip } from '@/components/metric-tooltip'
 import { Select } from '@/components/catalyst/select'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { GithubLink } from '@/components/github-link'
 import { AnimatedNumber, CallPane, RelativeChange, RouteMark, type DocumentPayload } from '../simulator'
 import type { PassageEvidence, PassageMetricKey, PassageMetrics, PassageTaskId } from '@/lib/msmarco-evidence'
 import type { getMsmarcoQueryPayload } from '@/lib/server-data'
@@ -156,7 +157,7 @@ export function PassageSimulator({ initial, options, taskInfo, referenceMetrics 
   }
 
   return <main className="site-shell passage-site">
-    <header className="site-header page-wrap"><div className="brand"><RouteMark className="brand-mark" /><span>JEV reranking</span></div><nav className="dataset-nav" aria-label="Experiment dataset"><a href="/">WSJ</a><a href="/passages" aria-current="page">MS MARCO</a></nav><ThemeToggle /></header>
+    <header className="site-header page-wrap"><div className="brand"><RouteMark className="brand-mark" /><span>JEV reranking</span></div><nav className="dataset-nav" aria-label="Experiment dataset"><a href="/">WSJ</a><a href="/passages" aria-current="page">MS MARCO</a></nav><ThemeToggle /><GithubLink /></header>
     <div className="page-wrap">
       <section className="hero passage-hero" aria-labelledby="passage-title">
         <div className="hero-copy">
