@@ -132,8 +132,8 @@ button, a, select { -webkit-tap-highlight-color: transparent; }
 .quiet-action { display: inline-flex; align-items: center; gap: 6px; padding: 9px; border: 0; background: none; color: var(--muted); font-size: .8rem; }
 .quiet-action:hover { color: var(--text); }
 .replay-progress { overflow: hidden; height: 3px; background: var(--surface-soft); }
-.replay-progress-fill { display: block; width: 100%; height: 100%; background: var(--accent); transform-origin: left; animation: fill 2.25s linear forwards; }
-.search-progress-fill { display: block; width: 100%; height: 100%; background: var(--accent); transform-origin: left; animation: fill .65s linear forwards; }
+.replay-progress-fill { display: block; width: 100%; height: 100%; background: var(--accent); transform-origin: left; animation: fill 1.3s linear forwards; }
+.search-progress-fill { display: block; width: 100%; height: 100%; background: var(--accent); transform-origin: left; animation: fill .35s linear forwards; }
 @keyframes fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 .content-alert, .inline-error { display: flex; align-items: start; gap: 10px; padding: 13px 16px; border: 1px solid var(--line); background: var(--surface-soft); color: var(--text); font-size: .82rem; line-height: 1.5; }
 .content-alert svg { flex: 0 0 auto; }

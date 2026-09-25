@@ -14,7 +14,9 @@ import type { getMsmarcoQueryPayload } from '@/lib/server-data'
 type QueryPayload = NonNullable<Awaited<ReturnType<typeof getMsmarcoQueryPayload>>>
 type Phase = 'before' | 'scoring' | 'after'
 type Option = { id: string; text: string }
-const AUTO_REPLAY_DELAY_MS = 2200
+const AUTO_REPLAY_DELAY_MS = 800
+const SEARCH_REPLAY_MS = 350
+const SCORE_REPLAY_MS = 1300
 const REORDER_SETTLE_MS = 700
 
 const metricLabels: { key: Exclude<PassageMetricKey, 'recall_1000'>; label: string; meaning: string; purpose: string }[] = [
@@ -60,7 +62,7 @@ export function PassageSimulator({ initial, options, taskInfo, referenceMetrics 
   const reduced = useReducedMotion()
 
   useEffect(() => {
-    autoTimer.current = setTimeout(startReplay, AUTO_REPLAY_DELAY_MS)
+    autoTimer.current = setTimeout(startReplay, reduced ? 300 : AUTO_REPLAY_DELAY_MS)
     return () => {
       clearPlayback()
       searchController.current?.abort()
@@ -97,11 +99,11 @@ export function PassageSimulator({ initial, options, taskInfo, referenceMetrics 
         if (!response.ok) throw new Error(data.error || 'Could not load the saved query.')
         return data as QueryPayload
       })
-    Promise.all([search, new Promise<void>(resolve => setTimeout(resolve, reduced ? 0 : 650))])
+    Promise.all([search, new Promise<void>(resolve => setTimeout(resolve, reduced ? 0 : SEARCH_REPLAY_MS))])
       .then(([data]) => {
         if (controller.signal.aborted) return
         setPayload(data)
-        autoTimer.current = setTimeout(() => { if (!controller.signal.aborted) startReplay() }, AUTO_REPLAY_DELAY_MS)
+        autoTimer.current = setTimeout(() => { if (!controller.signal.aborted) startReplay() }, reduced ? 300 : AUTO_REPLAY_DELAY_MS)
       })
       .catch(error => { if (!controller.signal.aborted) setLoadError(error.message) })
       .finally(() => { if (!controller.signal.aborted) setIsLoading(false) })
@@ -122,7 +124,7 @@ export function PassageSimulator({ initial, options, taskInfo, referenceMetrics 
           settleTimer.current = null
           setReplayReady(true)
         }, reduced ? 0 : REORDER_SETTLE_MS)
-      }, reduced ? 100 : 2250)
+      }, reduced ? 100 : SCORE_REPLAY_MS)
     })
   }
 
@@ -197,7 +199,7 @@ export function PassageSimulator({ initial, options, taskInfo, referenceMetrics 
         const isOpen = openId === docid
         const details = documentData[`${qid}:${task}:${docid}`]
         const movement = doc.originalRank - doc.finalRank
-        return <motion.li key={docid} layout="position" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -14 }} transition={{ layout: { type: 'spring', stiffness: 340, damping: 34 }, opacity: { duration: .2 } }} className={`result-row ${isOpen ? 'result-open' : ''}`}><div className="result-main" role="button" tabIndex={0} aria-expanded={isOpen} aria-label={`${doc.title}. ${isOpen ? 'Hide' : 'Show'} JEV call`} onClick={() => toggleResult(docid)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleResult(docid) } }}><div className="rank-cell"><span className="rank-number">{String(index + 1).padStart(2, '0')}</span></div><div className="result-copy"><div className="result-eyeline"><span className="doc-id">PASSAGE {docid}</span>{showGrades && <Grade grade={doc.judgment} />}</div><div className="result-title">{doc.title}<span className="result-open-icon">{isOpen ? <ChevronUpIcon className="size-4" /> : <ChevronDownIcon className="size-4" />}</span></div>{afterShown && <div className="result-subline"><span className={movement > 0 ? 'moved-up' : movement < 0 ? 'moved-down' : ''}>{movement > 0 ? `↑ ${movement} from monoBERT` : movement < 0 ? `↓ ${Math.abs(movement)} from monoBERT` : 'Same rank'}</span></div>}</div><div className="result-score">{phase !== 'before' && doc.score !== null ? <motion.div initial={{ opacity: 0, y: 7 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: phase === 'scoring' && !reduced ? Math.min(index * .13, 1.2) : 0 }}><small>JEV</small><strong><AnimatedNumber value={doc.score} places={2} animateIn /></strong></motion.div> : <span className="score-pending">—</span>}</div></div><AnimatePresence initial={false}>{isOpen && <motion.div className="result-details" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: reduced ? 0 : .28, ease: [0.16, 1, 0.3, 1] }}><div className="details-inner">{documentError ? <div className="inline-error">{documentError}</div> : !details ? <div className="details-loading">Loading the recorded JEV call…</div> : <CallPane details={details} task={task} query={payload.text} question={activeTask.question} stateField="candidate_passage" />}</div></motion.div>}</AnimatePresence></motion.li>
+        return <motion.li key={docid} layout="position" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -14 }} transition={{ layout: { type: 'spring', stiffness: 340, damping: 34 }, opacity: { duration: .2 } }} className={`result-row ${isOpen ? 'result-open' : ''}`}><div className="result-main" role="button" tabIndex={0} aria-expanded={isOpen} aria-label={`${doc.title}. ${isOpen ? 'Hide' : 'Show'} JEV call`} onClick={() => toggleResult(docid)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleResult(docid) } }}><div className="rank-cell"><span className="rank-number">{String(index + 1).padStart(2, '0')}</span></div><div className="result-copy"><div className="result-eyeline"><span className="doc-id">PASSAGE {docid}</span>{showGrades && <Grade grade={doc.judgment} />}</div><div className="result-title">{doc.title}<span className="result-open-icon">{isOpen ? <ChevronUpIcon className="size-4" /> : <ChevronDownIcon className="size-4" />}</span></div>{afterShown && <div className="result-subline"><span className={movement > 0 ? 'moved-up' : movement < 0 ? 'moved-down' : ''}>{movement > 0 ? `↑ ${movement} from monoBERT` : movement < 0 ? `↓ ${Math.abs(movement)} from monoBERT` : 'Same rank'}</span></div>}</div><div className="result-score">{phase !== 'before' && doc.score !== null ? <motion.div initial={{ opacity: 0, y: 7 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: phase === 'scoring' && !reduced ? Math.min(index * 0.05, 0.45) : 0 }}><small>JEV</small><strong><AnimatedNumber value={doc.score} places={2} animateIn /></strong></motion.div> : <span className="score-pending">—</span>}</div></div><AnimatePresence initial={false}>{isOpen && <motion.div className="result-details" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: reduced ? 0 : .28, ease: [0.16, 1, 0.3, 1] }}><div className="details-inner">{documentError ? <div className="inline-error">{documentError}</div> : !details ? <div className="details-loading">Loading the recorded JEV call…</div> : <CallPane details={details} task={task} query={payload.text} question={activeTask.question} stateField="candidate_passage" />}</div></motion.div>}</AnimatePresence></motion.li>
       })}</AnimatePresence></ol>}<div className="ranking-tail"><span>All supplied candidates were scored.</span><span>{afterShown ? `${payload.seconds.toFixed(2)} s · ${payload.calls} recorded calls` : 'Saved experiment replay'}</span></div></section>
 
       <section className="evidence-section" aria-labelledby="passage-evidence-title">
