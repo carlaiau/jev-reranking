@@ -1,4 +1,4 @@
-# Rerank Lab
+# JEV reranking
 
 A mobile-first Next.js replay of completed JEV reranking experiments. The lead route reorders the fixed WSJ BM25 **with feedback** top-100 candidate set using complete-document JEV scores. `/passages` replays the completed MS MARCO v1 / TREC DL 2019 experiment on every supplied candidate, comparing the saved monoBERT and original-text JEV rankings. Each page automatically plays the saved JEV rerank a few seconds after loading its initial results; choosing a query first replays its saved BM25 search or monoBERT reference load. The query selector stays at the top while scrolling, and Replay JEV starts the rerank again on demand. Both pages offer light and dark modes. Playback makes no live model calls.
 

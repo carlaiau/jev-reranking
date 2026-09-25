@@ -156,7 +156,7 @@ export function PassageSimulator({ initial, options, taskInfo, referenceMetrics 
   }
 
   return <main className="site-shell passage-site">
-    <header className="site-header page-wrap"><div className="brand"><RouteMark className="brand-mark" /><span>Rerank Lab</span></div><nav className="dataset-nav" aria-label="Experiment dataset"><a href="/">WSJ</a><a href="/passages" aria-current="page">MS MARCO</a></nav><ThemeToggle /></header>
+    <header className="site-header page-wrap"><div className="brand"><RouteMark className="brand-mark" /><span>JEV reranking</span></div><nav className="dataset-nav" aria-label="Experiment dataset"><a href="/">WSJ</a><a href="/passages" aria-current="page">MS MARCO</a></nav><ThemeToggle /></header>
     <div className="page-wrap">
       <section className="hero passage-hero" aria-labelledby="passage-title">
         <div className="hero-copy">
